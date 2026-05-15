@@ -17,5 +17,5 @@ export default function Page() {
     return <Landing copy={copy} onStart={() => setStarted(true)} />;
   }
 
-  return <Chat copy={copy} />;
+  return <Chat copy={copy} onBack={() => setStarted(false)} />;
 }

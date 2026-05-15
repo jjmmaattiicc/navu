@@ -1,8 +1,11 @@
 import { copy as translations } from "@/lib/translations";
+import { getUiStrings, type UiStrings } from "@/lib/ui-copy";
 
 export type Locale = keyof typeof translations;
 
-export type AppCopy = (typeof translations)[Locale];
+type BaseCopy = (typeof translations)[Locale];
+
+export type AppCopy = BaseCopy & UiStrings;
 
 const copy = translations as Record<Locale, AppCopy>;
 
@@ -89,7 +92,7 @@ export function resolveLocale(browserLanguage: string): Locale {
 }
 
 export function getCopy(locale: Locale): AppCopy {
-  return copy[locale];
+  return { ...copy[locale], ...getUiStrings(locale) };
 }
 
 export function getBrowserCopy(): AppCopy {

@@ -6,9 +6,10 @@ import type { Message } from "@/lib/navu";
 
 type ChatProps = {
   copy: AppCopy;
+  onBack: () => void;
 };
 
-export default function Chat({ copy }: ChatProps) {
+export default function Chat({ copy, onBack }: ChatProps) {
   const [messages, setMessages] = useState<Message[]>([
     { role: "assistant", content: copy.greeting },
   ]);
@@ -84,14 +85,21 @@ export default function Chat({ copy }: ChatProps) {
 
   return (
     <div className="flex h-dvh flex-col bg-white">
-      <header className="shrink-0 border-b border-neutral-100 px-6 py-5">
+      <header className="flex shrink-0 items-center gap-3 border-b border-neutral-100 px-4 py-3 sm:px-6">
+        <button
+          type="button"
+          onClick={onBack}
+          className="text-[14px] text-neutral-400 transition-colors hover:text-neutral-600"
+        >
+          ← {copy.backButton}
+        </button>
         <h1 className="text-lg font-medium tracking-tight text-neutral-900">
           Navu
         </h1>
       </header>
 
-      <div className="flex-1 overflow-y-auto px-4 py-6 sm:px-6">
-        <div className="mx-auto flex max-w-2xl flex-col gap-4">
+      <div className="flex min-h-0 flex-1 flex-col justify-end overflow-y-auto px-4 pb-2 pt-3 sm:px-6">
+        <div className="mx-auto flex w-full max-w-2xl flex-col justify-end gap-3">
           {messages.map((message, index) => (
             <MessageBubble key={index} message={message} />
           ))}
@@ -118,7 +126,7 @@ export default function Chat({ copy }: ChatProps) {
           <button
             type="submit"
             disabled={!input.trim() || isLoading}
-            className="shrink-0 rounded-2xl bg-neutral-900 px-5 py-3 text-sm font-medium text-white transition-colors hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-40"
+            className="shrink-0 rounded-2xl bg-neutral-900 px-5 py-3.5 text-[15px] font-medium text-white shadow-sm transition-colors hover:bg-neutral-800 disabled:cursor-not-allowed disabled:bg-neutral-300 disabled:text-neutral-500"
           >
             {copy.sendButton}
           </button>
@@ -149,10 +157,10 @@ function MessageBubble({ message }: { message: Message }) {
 function TypingIndicator() {
   return (
     <div className="flex justify-start">
-      <div className="flex items-center gap-1 rounded-2xl bg-neutral-100 px-4 py-3">
-        <span className="h-2 w-2 animate-bounce rounded-full bg-neutral-400 [animation-delay:0ms]" />
-        <span className="h-2 w-2 animate-bounce rounded-full bg-neutral-400 [animation-delay:150ms]" />
-        <span className="h-2 w-2 animate-bounce rounded-full bg-neutral-400 [animation-delay:300ms]" />
+      <div className="flex items-center gap-1.5 rounded-2xl bg-neutral-100 px-4 py-3.5">
+        <span className="h-2 w-2 animate-bounce rounded-full bg-neutral-500 [animation-delay:0ms]" />
+        <span className="h-2 w-2 animate-bounce rounded-full bg-neutral-500 [animation-delay:150ms]" />
+        <span className="h-2 w-2 animate-bounce rounded-full bg-neutral-500 [animation-delay:300ms]" />
       </div>
     </div>
   );
