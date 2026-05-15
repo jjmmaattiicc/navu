@@ -3,13 +3,19 @@
 import { useState } from "react";
 import Chat from "@/components/Chat";
 import Landing from "@/components/Landing";
+import { useBrowserLocale } from "@/hooks/useBrowserLocale";
 
 export default function Page() {
   const [started, setStarted] = useState(false);
+  const { copy, ready } = useBrowserLocale();
 
-  if (!started) {
-    return <Landing onStart={() => setStarted(true)} />;
+  if (!ready) {
+    return <div className="min-h-dvh bg-white" />;
   }
 
-  return <Chat />;
+  if (!started) {
+    return <Landing copy={copy} onStart={() => setStarted(true)} />;
+  }
+
+  return <Chat copy={copy} />;
 }

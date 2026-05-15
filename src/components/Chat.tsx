@@ -1,11 +1,16 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { NAVU_GREETING, type Message } from "@/lib/navu";
+import type { AppCopy } from "@/lib/i18n";
+import type { Message } from "@/lib/navu";
 
-export default function Chat() {
+type ChatProps = {
+  copy: AppCopy;
+};
+
+export default function Chat({ copy }: ChatProps) {
   const [messages, setMessages] = useState<Message[]>([
-    { role: "assistant", content: NAVU_GREETING },
+    { role: "assistant", content: copy.greeting },
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -105,7 +110,7 @@ export default function Chat() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Type your answer..."
+            placeholder={copy.inputPlaceholder}
             rows={1}
             disabled={isLoading}
             className="max-h-32 min-h-[44px] flex-1 resize-none rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-[15px] text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-300 focus:bg-white focus:outline-none disabled:opacity-50"
@@ -115,7 +120,7 @@ export default function Chat() {
             disabled={!input.trim() || isLoading}
             className="shrink-0 rounded-2xl bg-neutral-900 px-5 py-3 text-sm font-medium text-white transition-colors hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-40"
           >
-            Send
+            {copy.sendButton}
           </button>
         </form>
       </footer>

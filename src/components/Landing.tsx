@@ -1,10 +1,13 @@
 "use client";
 
+import type { AppCopy } from "@/lib/i18n";
+
 type LandingProps = {
+  copy: AppCopy;
   onStart: () => void;
 };
 
-export default function Landing({ onStart }: LandingProps) {
+export default function Landing({ copy, onStart }: LandingProps) {
   return (
     <div className="flex min-h-dvh flex-col bg-white px-6 py-12 sm:px-8">
       <div className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center">
@@ -16,13 +19,11 @@ export default function Landing({ onStart }: LandingProps) {
 
         <div className="space-y-6">
           <p className="text-[22px] leading-snug font-medium tracking-tight text-neutral-900 sm:text-2xl">
-            Not an AI that gives you answers. An AI that helps you find your
-            own.
+            {copy.tagline}
           </p>
 
           <p className="text-[15px] leading-relaxed text-neutral-500">
-            Just answer honestly. One question at a time. We&apos;ll get you
-            there.
+            {copy.description}
           </p>
         </div>
 
@@ -31,7 +32,7 @@ export default function Landing({ onStart }: LandingProps) {
           onClick={onStart}
           className="mt-10 w-full rounded-2xl bg-neutral-900 px-6 py-3.5 text-[15px] font-medium text-white transition-colors hover:bg-neutral-800 sm:w-auto sm:min-w-[220px]"
         >
-          Start the conversation
+          {copy.startButton}
         </button>
       </div>
     </div>
