@@ -2,7 +2,9 @@ export const NAVU_SYSTEM_PROMPT = `NEVER use emoji under any circumstances. Not 
 
 Never include role labels like Human:, Assistant:, User:, Navu: or any similar prefixes in your responses. Never repeat what the user said back to them with a label. Just respond directly and naturally.
 
-You are Navu, a creative detective and a trusted advisor.
+You are Navu. You only speak as Navu. You never write what the user says or simulate user messages. You never put words in the user's mouth.
+
+You are also a creative detective and a trusted advisor.
 
 You help people find an idea that fits them: a business, a project, a career move, or a direction in life. You listen first, then reflect and guide until they see it themselves. You feel like a smart friend, not a robot and not a therapist.
 
@@ -134,18 +136,114 @@ export type Message = {
   content: string;
 };
 
+const USER_LABEL_PATTERN =
+  /^(Human|User|Korisnik|Čovjek|Čovjeka|Ty|Du|Vous|Tu):\s*/i;
+const ASSISTANT_LABEL_PATTERN =
+  /^(Assistant|Navu|Asistent|AI|Bot):\s*/i;
+
 export function stripRoleLabels(text: string): string {
   return text
     .split("\n")
-    .map((line) => line.replace(/^(Human|Assistant|User|Navu):\s*/i, ""))
+    .map((line) =>
+      line
+        .replace(USER_LABEL_PATTERN, "")
+        .replace(ASSISTANT_LABEL_PATTERN, "")
+    )
     .join("\n")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 }
 
+function sanitizeContentForRole(
+  content: string,
+  role: Message["role"]
+): string {
+  const stripped = stripRoleLabels(content);
+  if (role === "assistant") {
+    return extractAssistantOnlyReply(stripped);
+  }
+  return stripped;
+}
+
+export function extractAssistantOnlyReply(text: string): string {
+  const lines = text.split("\n");
+  const hasDialogueLabels = lines.some(
+    (line) => USER_LABEL_PATTERN.test(line) || ASSISTANT_LABEL_PATTERN.test(line)
+  );
+
+  if (!hasDialogueLabels) {
+    return text.trim();
+  }
+
+  const assistantParts: string[] = [];
+  let currentAssistant: string[] = [];
+
+  for (const line of lines) {
+    const userMatch = line.match(USER_LABEL_PATTERN);
+    const assistantMatch = line.match(ASSISTANT_LABEL_PATTERN);
+
+    if (userMatch) {
+      if (currentAssistant.length) {
+        assistantParts.push(currentAssistant.join("\n").trim());
+        currentAssistant = [];
+      }
+      continue;
+    }
+
+    if (assistantMatch) {
+      if (currentAssistant.length) {
+        assistantParts.push(currentAssistant.join("\n").trim());
+      }
+      const rest = line.replace(ASSISTANT_LABEL_PATTERN, "").trim();
+      currentAssistant = rest ? [rest] : [];
+      continue;
+    }
+
+    if (currentAssistant.length || assistantParts.length) {
+      currentAssistant.push(line);
+    }
+  }
+
+  if (currentAssistant.length) {
+    assistantParts.push(currentAssistant.join("\n").trim());
+  }
+
+  const combined = assistantParts.filter(Boolean).join("\n\n").trim();
+  return combined || text.trim();
+}
+
+function isValidRole(role: unknown): role is Message["role"] {
+  return role === "user" || role === "assistant";
+}
+
+export function prepareMessagesForApi(messages: Message[]): Message[] {
+  const prepared: Message[] = [];
+
+  for (const message of messages) {
+    if (!isValidRole(message.role)) continue;
+
+    const content = sanitizeContentForRole(message.content, message.role);
+    if (!content) continue;
+
+    const last = prepared[prepared.length - 1];
+    if (last && last.role === message.role) {
+      last.content = `${last.content}\n\n${content}`;
+      continue;
+    }
+
+    prepared.push({ role: message.role, content });
+  }
+
+  return prepared;
+}
+
 export function sanitizeMessageForApi(message: Message): Message {
+  if (!isValidRole(message.role)) {
+    return { role: "user", content: stripRoleLabels(message.content) };
+  }
+
   return {
     role: message.role,
-    content: stripRoleLabels(message.content),
+    content: sanitizeContentForRole(message.content, message.role),
   };
 }

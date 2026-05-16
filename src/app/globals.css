@@ -38,3 +38,26 @@ button {
 .typing-dot-delay-2 {
   animation-delay: 2.4s;
 }
+
+@keyframes welcome-pulse {
+  0%,
+  100% {
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+.welcome-pulse-dot {
+  animation: welcome-pulse 1.5s ease-in-out infinite;
+  opacity: 0.3;
+}
+
+.welcome-pulse-dot-delay-1 {
+  animation-delay: 0.25s;
+}
+
+.welcome-pulse-dot-delay-2 {
+  animation-delay: 0.5s;
+}

@@ -1,7 +1,8 @@
 import Anthropic, { APIError } from "@anthropic-ai/sdk";
 import {
+  extractAssistantOnlyReply,
   NAVU_SYSTEM_PROMPT,
-  sanitizeMessageForApi,
+  prepareMessagesForApi,
   stripRoleLabels,
   type Message,
 } from "@/lib/navu";
@@ -38,6 +39,15 @@ export async function POST(request: Request) {
       );
     }
 
+    const preparedMessages = prepareMessagesForApi(messages);
+
+    if (!preparedMessages.length) {
+      return Response.json(
+        { error: "No valid messages in history" },
+        { status: 400 }
+      );
+    }
+
     const apiKey = process.env.ANTHROPIC_API_KEY?.trim();
     if (!apiKey) {
       return Response.json(
@@ -52,12 +62,12 @@ export async function POST(request: Request) {
       model: CLAUDE_MODEL,
       max_tokens: 1024,
       system: NAVU_SYSTEM_PROMPT,
-      messages: messages.map((m) => sanitizeMessageForApi(m)),
+      messages: preparedMessages,
     });
 
     const textBlock = response.content.find((block) => block.type === "text");
     const rawReply = textBlock?.type === "text" ? textBlock.text.trim() : "";
-    const reply = stripRoleLabels(rawReply);
+    const reply = extractAssistantOnlyReply(stripRoleLabels(rawReply));
 
     if (!reply || isSilencePlaceholder(reply)) {
       return Response.json({ message: "" });

@@ -208,11 +208,27 @@ export default function Chat({ copy, locale, onBack }: ChatProps) {
               welcomeFading ? "opacity-0" : "opacity-100"
             }`}
           >
-            {!introLoading && welcomeText && (
-              <p className="absolute left-1/2 top-1/2 w-full max-w-3xl -translate-x-1/2 -translate-y-1/2 whitespace-pre-line px-6 text-center text-[1.8rem] leading-[2.4] text-[#3D3530]">
-                {welcomeText}
-              </p>
-            )}
+            <div className="absolute inset-0 flex items-center justify-center px-6">
+              <div className="grid w-full max-w-3xl place-items-center">
+                <div
+                  className={`col-start-1 row-start-1 flex items-center justify-center gap-2 transition-opacity duration-300 ${
+                    introLoading ? "opacity-100" : "opacity-0"
+                  }`}
+                  aria-hidden={!introLoading}
+                >
+                  <WelcomeLoadingDots />
+                </div>
+              {welcomeText && (
+                  <p
+                    className={`col-start-1 row-start-1 whitespace-pre-line text-center text-[1.8rem] leading-[2.4] text-[#3D3530] transition-opacity duration-300 ${
+                      introLoading ? "opacity-0" : "opacity-100"
+                    }`}
+                  >
+                    {welcomeText}
+                  </p>
+                )}
+              </div>
+            </div>
           </div>
         )}
 
@@ -297,6 +313,16 @@ function formatAssistantMessage(content: string) {
         return <span key={index}>{part}</span>;
       })}
     </span>
+  );
+}
+
+function WelcomeLoadingDots() {
+  return (
+    <>
+      <span className="welcome-pulse-dot h-2 w-2 rounded-full bg-[#3D3530]" />
+      <span className="welcome-pulse-dot welcome-pulse-dot-delay-1 h-2 w-2 rounded-full bg-[#3D3530]" />
+      <span className="welcome-pulse-dot welcome-pulse-dot-delay-2 h-2 w-2 rounded-full bg-[#3D3530]" />
+    </>
   );
 }
 
