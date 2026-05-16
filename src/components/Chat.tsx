@@ -224,7 +224,7 @@ export default function Chat({ copy, locale, onBack }: ChatProps) {
                 </div>
               {welcomeText && (
                   <p
-                    className={`col-start-1 row-start-1 whitespace-pre-line text-center text-[1.8rem] leading-[2.4] text-[#3D3530] transition-opacity duration-300 ${
+                    className={`col-start-1 row-start-1 whitespace-pre-line text-center text-[1.2rem] leading-[2.4] text-[#3D3530] transition-opacity duration-300 md:text-[1.8rem] ${
                       introLoading ? "opacity-0" : "opacity-100"
                     }`}
                   >
