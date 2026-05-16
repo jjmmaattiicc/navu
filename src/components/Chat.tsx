@@ -200,7 +200,7 @@ export default function Chat({ copy, locale, onBack }: ChatProps) {
         </h1>
       </header>
 
-      <div className="relative min-h-0 flex-1">
+      <div className="relative flex min-h-0 flex-1 flex-col">
         {showWelcomeOverlay && (
           <div
             className={`pointer-events-none absolute inset-0 z-10 transition-opacity duration-300 ${
@@ -218,7 +218,7 @@ export default function Chat({ copy, locale, onBack }: ChatProps) {
         {hasUserMessage && (
           <div
             ref={scrollRef}
-            className="flex h-[calc(100vh-120px)] flex-col justify-end overflow-x-hidden overflow-y-auto px-4 py-6"
+            className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-scroll px-4 py-6"
           >
             <div className="mx-auto flex w-full max-w-[680px] flex-col gap-5">
               {messages.map((message, index) => (
@@ -264,7 +264,10 @@ function MessageBubble({ message }: { message: Message }) {
 
   if (isUser) {
     return (
-      <div className="w-fit max-w-[65%] self-end rounded-[18px_18px_4px_18px] bg-[#2C2825] px-4 py-2.5 text-left text-[15px] leading-[1.6] text-[#F5F2EC]">
+      <div
+        className="w-fit max-w-[65%] self-end bg-[#2C2825] px-4 py-2.5 text-left text-[15px] leading-[1.6] text-[#F5F2EC]"
+        style={{ borderRadius: "18px 18px 4px 18px" }}
+      >
         {message.content}
       </div>
     );
