@@ -99,8 +99,15 @@ export default function Chat({ copy, onBack }: ChatProps) {
     el.style.height = `${Math.min(el.scrollHeight, 320)}px`;
   }
 
+  function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit(e);
+    }
+  }
+
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-white">
+    <div className="flex h-screen flex-col overflow-hidden bg-[#FAF8F5]">
       <header className="flex h-[60px] shrink-0 items-center gap-3 border-b border-neutral-100 px-4 sm:px-6">
         <button
           type="button"
@@ -137,6 +144,7 @@ export default function Chat({ copy, onBack }: ChatProps) {
             ref={inputRef}
             value={input}
             onChange={handleInputChange}
+            onKeyDown={handleKeyDown}
             placeholder={copy.inputPlaceholder}
             rows={2}
             disabled={isLoading}
@@ -162,25 +170,44 @@ function MessageBubble({ message }: { message: Message }) {
   return (
     <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
       <div
-        className={`max-w-[85%] rounded-2xl px-4 py-3 text-[15px] leading-relaxed ${
+        className={`max-w-[85%] rounded-[20px] px-4 py-3 text-[15px] leading-relaxed ${
           isUser
-            ? "bg-neutral-900 text-white"
-            : "bg-neutral-100 text-neutral-800"
+            ? "bg-[#2C2825] text-white"
+            : "bg-[#F0EBE3] text-[#2C2825] shadow-[0_1px_4px_rgba(0,0,0,0.06)]"
         }`}
       >
-        {message.content}
+        {isUser ? message.content : formatAssistantMessage(message.content)}
       </div>
     </div>
+  );
+}
+
+function formatAssistantMessage(content: string) {
+  const parts = content.split(/(\*\*[^*]+\*\*)/g);
+
+  return (
+    <span className="whitespace-pre-line">
+      {parts.map((part, index) => {
+        if (part.startsWith("**") && part.endsWith("**")) {
+          return (
+            <strong key={index} className="font-semibold text-[#2C2825]">
+              {part.slice(2, -2)}
+            </strong>
+          );
+        }
+        return <span key={index}>{part}</span>;
+      })}
+    </span>
   );
 }
 
 function TypingIndicator() {
   return (
     <div className="flex justify-start">
-      <div className="flex items-center gap-1.5 rounded-2xl bg-neutral-100 px-4 py-3.5">
-        <span className="typing-dot h-2 w-2 rounded-full bg-neutral-400" />
-        <span className="typing-dot typing-dot-delay-1 h-2 w-2 rounded-full bg-neutral-400" />
-        <span className="typing-dot typing-dot-delay-2 h-2 w-2 rounded-full bg-neutral-400" />
+      <div className="flex items-center gap-1.5 rounded-[20px] bg-[#F0EBE3] px-4 py-3.5 shadow-[0_1px_4px_rgba(0,0,0,0.06)]">
+        <span className="typing-dot h-2 w-2 rounded-full bg-[#2C2825]/35" />
+        <span className="typing-dot typing-dot-delay-1 h-2 w-2 rounded-full bg-[#2C2825]/35" />
+        <span className="typing-dot typing-dot-delay-2 h-2 w-2 rounded-full bg-[#2C2825]/35" />
       </div>
     </div>
   );
