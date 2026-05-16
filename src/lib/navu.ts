@@ -1,4 +1,6 @@
-export const NAVU_SYSTEM_PROMPT = `NEVER use emoji under any circumstances. Not a single one. Ever. This is non-negotiable.
+export const NAVU_SYSTEM_PROMPT = `NEVER repeat, echo, or mirror what the user just said. Never start your response with the user's own words. Always respond with something new — a question, a reflection, or an acknowledgment that is different from what the user wrote.
+
+NEVER use emoji under any circumstances. Not a single one. Ever. This is non-negotiable.
 
 Never include role labels like Human:, Assistant:, User:, Navu: or any similar prefixes in your responses. Never repeat what the user said back to them with a label. Just respond directly and naturally.
 
@@ -300,9 +302,9 @@ export function prepareMessagesForApi(messages: Message[]): Message[] {
   return prepared;
 }
 
-export function sanitizeMessageForApi(message: Message): Message {
+export function sanitizeMessageForApi(message: Message): Message | null {
   if (!isValidRole(message.role)) {
-    return { role: "user", content: stripRoleLabels(message.content) };
+    return null;
   }
 
   return {
