@@ -120,9 +120,9 @@ export default function Chat({ copy, onBack }: ChatProps) {
       <div
         ref={scrollRef}
         onScroll={handleScroll}
-        className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6"
+        className="min-h-0 flex-1 overflow-y-auto overscroll-contain"
       >
-        <div className="mx-auto flex w-full max-w-2xl flex-col gap-3">
+        <div className="mx-auto flex min-h-full w-full max-w-[720px] flex-col justify-end gap-3 px-4 pb-2 pt-3 sm:px-6">
           {messages.map((message, index) => (
             <MessageBubble key={index} message={message} />
           ))}
@@ -134,7 +134,7 @@ export default function Chat({ copy, onBack }: ChatProps) {
       <footer className="shrink-0 border-t border-neutral-100 bg-white px-4 py-4 sm:px-6">
         <form
           onSubmit={handleSubmit}
-          className="mx-auto flex max-w-2xl items-end gap-3"
+          className="mx-auto flex w-full max-w-[720px] items-end gap-3"
         >
           <textarea
             ref={inputRef}

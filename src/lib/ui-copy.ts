@@ -1,4 +1,5 @@
 import type { Locale } from "@/lib/i18n";
+import { TRUST_LINES } from "@/lib/trust-lines";
 
 export type UiStrings = {
   trustLine: string;
@@ -8,7 +9,7 @@ export type UiStrings = {
 };
 
 const en: UiStrings = {
-  trustLine: "No wrong answers. No judgment. Just you and your thoughts.",
+  trustLine: TRUST_LINES.en,
   durationLine: "Usually 10-15 minutes. You'll leave with clarity.",
   backButton: "Back",
   inputPlaceholder: "Write freely...",
@@ -17,7 +18,7 @@ const en: UiStrings = {
 const strings: Partial<Record<Locale, UiStrings>> = {
   en,
   hr: {
-    trustLine: "Nema krivih odgovora. Nema osuđivanja. Samo ti i tvoje misli.",
+    trustLine: TRUST_LINES.hr,
     durationLine: "Obično 10-15 minuta. Otići ćete s jasnoćom.",
     backButton: "Natrag",
     inputPlaceholder: "Pišite slobodno...",
@@ -152,5 +153,9 @@ const strings: Partial<Record<Locale, UiStrings>> = {
 };
 
 export function getUiStrings(locale: Locale): UiStrings {
-  return strings[locale] ?? en;
+  const base = strings[locale] ?? en;
+  return {
+    ...base,
+    trustLine: TRUST_LINES[locale] ?? TRUST_LINES.en,
+  };
 }
