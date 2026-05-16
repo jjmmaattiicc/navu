@@ -9,8 +9,8 @@ type LandingProps = {
 
 export default function Landing({ copy, onStart }: LandingProps) {
   return (
-    <div className="flex min-h-screen flex-col justify-center bg-[#F7F4EF] px-6 py-12 sm:px-8">
-      <div className="w-full max-w-lg">
+    <div className="flex min-h-screen items-center justify-center bg-[#F7F4EF] px-6 py-12 sm:px-8">
+      <div className="mx-auto w-full max-w-[540px]">
         <header className="mb-12">
           <p className="text-xl font-medium tracking-tight text-[#1a1a1a]/70">
             Navu
@@ -18,7 +18,7 @@ export default function Landing({ copy, onStart }: LandingProps) {
         </header>
 
         <div className="space-y-5">
-          <h1 className="text-[2.5rem] font-medium leading-[1.15] tracking-tight text-[#1a1a1a] sm:text-5xl">
+          <h1 className="text-[2.4rem] font-medium leading-[1.15] tracking-tight text-[#1a1a1a]">
             {copy.tagline}
           </h1>
 

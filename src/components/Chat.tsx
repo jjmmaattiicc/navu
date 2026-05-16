@@ -125,21 +125,20 @@ export default function Chat({ copy, onBack }: ChatProps) {
         </h1>
       </header>
 
-      <div className="flex h-[calc(100vh-60px)] min-h-0 flex-col">
-        <div
-          ref={scrollRef}
-          className="min-h-0 flex-1 overflow-y-auto px-4 py-6"
-        >
-          <div className="mx-auto flex min-h-full w-full max-w-[680px] flex-col justify-end gap-3">
-            {messages.map((message, index) => (
-              <MessageBubble key={index} message={message} />
-            ))}
-            {isLoading && <TypingIndicator />}
-            <div ref={bottomRef} aria-hidden />
-          </div>
+      <div
+        ref={scrollRef}
+        className="flex min-h-0 flex-1 flex-col justify-end overflow-y-auto px-4 py-6"
+      >
+        <div className="mx-auto flex w-full max-w-[680px] flex-col gap-3">
+          {messages.map((message, index) => (
+            <MessageBubble key={index} message={message} />
+          ))}
+          {isLoading && <TypingIndicator />}
+          <div ref={bottomRef} aria-hidden />
         </div>
+      </div>
 
-        <footer className="shrink-0 border-t border-neutral-100 bg-white px-4 py-4 sm:px-6">
+      <footer className="shrink-0 border-t border-neutral-100 bg-white px-4 py-4 sm:px-6">
         <form
           onSubmit={handleSubmit}
           className="mx-auto flex w-full max-w-[680px] items-end gap-3"
@@ -162,8 +161,7 @@ export default function Chat({ copy, onBack }: ChatProps) {
             {copy.sendButton}
           </button>
         </form>
-        </footer>
-      </div>
+      </footer>
     </div>
   );
 }
