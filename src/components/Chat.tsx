@@ -19,7 +19,11 @@ export default function Chat({ copy, onBack }: ChatProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
+  const isWelcomeState = !messages.some((m) => m.role === "user");
+
   useEffect(() => {
+    if (isWelcomeState) return;
+
     const container = scrollRef.current;
     if (!container) return;
 
@@ -30,7 +34,7 @@ export default function Chat({ copy, onBack }: ChatProps) {
     if (isNearBottom) {
       bottomRef.current?.scrollIntoView({ behavior: "smooth" });
     }
-  }, [messages]);
+  }, [messages, isWelcomeState]);
 
   useEffect(() => {
     const el = inputRef.current;
@@ -125,18 +129,24 @@ export default function Chat({ copy, onBack }: ChatProps) {
         </h1>
       </header>
 
-      <div
-        ref={scrollRef}
-        className="flex min-h-0 flex-1 flex-col justify-end overflow-y-auto px-4 py-6"
-      >
-        <div className="mx-auto flex w-full max-w-[680px] flex-col gap-3">
-          {messages.map((message, index) => (
-            <MessageBubble key={index} message={message} />
-          ))}
-          {isLoading && <TypingIndicator />}
-          <div ref={bottomRef} aria-hidden />
+      {isWelcomeState ? (
+        <div className="flex min-h-0 flex-1 items-center justify-center px-6 py-8">
+          <WelcomeBubble content={messages[0]?.content ?? copy.introMessage} />
         </div>
-      </div>
+      ) : (
+        <div
+          ref={scrollRef}
+          className="flex min-h-0 flex-1 flex-col justify-end overflow-y-auto px-4 py-6"
+        >
+          <div className="mx-auto flex w-full max-w-[680px] flex-col gap-3">
+            {messages.map((message, index) => (
+              <MessageBubble key={index} message={message} />
+            ))}
+            {isLoading && <TypingIndicator />}
+            <div ref={bottomRef} aria-hidden />
+          </div>
+        </div>
+      )}
 
       <footer className="shrink-0 border-t border-neutral-100 bg-white px-4 py-4 sm:px-6">
         <form
@@ -162,6 +172,16 @@ export default function Chat({ copy, onBack }: ChatProps) {
           </button>
         </form>
       </footer>
+    </div>
+  );
+}
+
+function WelcomeBubble({ content }: { content: string }) {
+  return (
+    <div className="mx-auto w-full max-w-lg">
+      <div className="rounded-[20px] bg-[#F0EBE3] px-8 py-8 text-center text-[17px] leading-relaxed text-[#2C2825] shadow-[0_1px_4px_rgba(0,0,0,0.06)] sm:px-10 sm:py-10 sm:text-[18px]">
+        {formatAssistantMessage(content)}
+      </div>
     </div>
   );
 }
