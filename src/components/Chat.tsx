@@ -20,9 +20,11 @@ export default function Chat({ copy, onBack }: ChatProps) {
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
     const behavior = messages.length <= 2 ? "auto" : "smooth";
     requestAnimationFrame(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior, block: "end" });
+      el.scrollTo({ top: el.scrollHeight, behavior });
     });
   }, [messages, isLoading]);
 
@@ -98,8 +100,8 @@ export default function Chat({ copy, onBack }: ChatProps) {
   }
 
   return (
-    <div className="flex h-screen flex-col bg-white">
-      <header className="flex shrink-0 items-center gap-3 border-b border-neutral-100 px-4 py-3 sm:px-6">
+    <div className="flex h-screen flex-col overflow-hidden bg-white">
+      <header className="flex h-[60px] shrink-0 items-center gap-3 border-b border-neutral-100 px-4 sm:px-6">
         <button
           type="button"
           onClick={onBack}
@@ -112,20 +114,21 @@ export default function Chat({ copy, onBack }: ChatProps) {
         </h1>
       </header>
 
-      <div
-        ref={scrollRef}
-        className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain"
-      >
-        <div className="mt-auto mx-auto flex w-full max-w-[680px] flex-col justify-end gap-3 px-4 pb-2 pt-3 sm:px-6">
-          {messages.map((message, index) => (
-            <MessageBubble key={index} message={message} />
-          ))}
-          {isLoading && <TypingIndicator />}
-          <div ref={messagesEndRef} />
+      <div className="flex h-[calc(100vh-60px)] min-h-0 flex-col">
+        <div
+          ref={scrollRef}
+          className="flex min-h-0 flex-1 flex-col justify-end overflow-y-auto px-4 py-6"
+        >
+          <div className="mx-auto flex w-full max-w-[680px] flex-col gap-3">
+            {messages.map((message, index) => (
+              <MessageBubble key={index} message={message} />
+            ))}
+            {isLoading && <TypingIndicator />}
+            <div ref={messagesEndRef} aria-hidden />
+          </div>
         </div>
-      </div>
 
-      <footer className="shrink-0 border-t border-neutral-100 bg-white px-4 py-4 sm:px-6">
+        <footer className="shrink-0 border-t border-neutral-100 bg-white px-4 py-4 sm:px-6">
         <form
           onSubmit={handleSubmit}
           className="mx-auto flex w-full max-w-[680px] items-end gap-3"
@@ -147,7 +150,8 @@ export default function Chat({ copy, onBack }: ChatProps) {
             {copy.sendButton}
           </button>
         </form>
-      </footer>
+        </footer>
+      </div>
     </div>
   );
 }
