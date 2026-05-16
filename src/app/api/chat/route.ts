@@ -4,6 +4,10 @@ import { NAVU_SYSTEM_PROMPT, type Message } from "@/lib/navu";
 const CLAUDE_MODEL =
   process.env.CLAUDE_MODEL?.trim() ?? "claude-sonnet-4-6";
 
+function isSilencePlaceholder(text: string): boolean {
+  return /^\((ostaje\s+)?tišina\)$/i.test(text) || /^\(silence\)$/i.test(text);
+}
+
 function formatApiError(error: unknown): { message: string; status: number } {
   if (error instanceof APIError) {
     const body = error.error as { error?: { message?: string } } | undefined;
@@ -50,13 +54,10 @@ export async function POST(request: Request) {
     });
 
     const textBlock = response.content.find((block) => block.type === "text");
-    const reply = textBlock?.type === "text" ? textBlock.text : "";
+    const reply = textBlock?.type === "text" ? textBlock.text.trim() : "";
 
-    if (!reply) {
-      return Response.json(
-        { error: "Claude returned an empty response" },
-        { status: 502 }
-      );
+    if (!reply || isSilencePlaceholder(reply)) {
+      return Response.json({ message: "" });
     }
 
     return Response.json({ message: reply });

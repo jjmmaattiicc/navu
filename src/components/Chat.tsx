@@ -147,14 +147,12 @@ export default function Chat({ copy, locale, onBack }: ChatProps) {
         throw new Error(data.error ?? `Request failed (${res.status})`);
       }
 
-      if (!data.message) {
-        throw new Error("No message in response");
+      if (data.message?.trim()) {
+        setMessages((prev) => [
+          ...prev,
+          { role: "assistant", content: data.message! },
+        ]);
       }
-
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", content: data.message! },
-      ]);
     } catch (err) {
       const detail =
         err instanceof Error ? err.message : "Unknown error occurred";
