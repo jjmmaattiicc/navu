@@ -11,15 +11,18 @@ type ChatProps = {
 };
 
 export default function Chat({ copy, locale, onBack }: ChatProps) {
+  const [welcomeText, setWelcomeText] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [introLoading, setIntroLoading] = useState(true);
+  const [showWelcomeOverlay, setShowWelcomeOverlay] = useState(true);
+  const [welcomeFading, setWelcomeFading] = useState(false);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  const isWelcomeState = !messages.some((m) => m.role === "user");
+  const hasUserMessage = messages.some((m) => m.role === "user");
 
   useEffect(() => {
     let cancelled = false;
@@ -49,18 +52,13 @@ export default function Chat({ copy, locale, onBack }: ChatProps) {
         }
 
         if (!cancelled) {
-          setMessages([{ role: "assistant", content: data.message }]);
+          setWelcomeText(data.message);
         }
       } catch (err) {
         if (!cancelled) {
           const detail =
             err instanceof Error ? err.message : "Unknown error occurred";
-          setMessages([
-            {
-              role: "assistant",
-              content: `Error: ${detail}`,
-            },
-          ]);
+          setWelcomeText(`Error: ${detail}`);
         }
       } finally {
         if (!cancelled) {
@@ -77,7 +75,18 @@ export default function Chat({ copy, locale, onBack }: ChatProps) {
   }, [locale]);
 
   useEffect(() => {
-    if (isWelcomeState) return;
+    if (!hasUserMessage || welcomeFading) return;
+
+    setWelcomeFading(true);
+    const timer = window.setTimeout(() => {
+      setShowWelcomeOverlay(false);
+    }, 300);
+
+    return () => window.clearTimeout(timer);
+  }, [hasUserMessage, welcomeFading]);
+
+  useEffect(() => {
+    if (!hasUserMessage) return;
 
     const container = scrollRef.current;
     if (!container) return;
@@ -89,7 +98,7 @@ export default function Chat({ copy, locale, onBack }: ChatProps) {
     if (isNearBottom) {
       bottomRef.current?.scrollIntoView({ behavior: "smooth" });
     }
-  }, [messages, isWelcomeState]);
+  }, [messages, isLoading, hasUserMessage]);
 
   useEffect(() => {
     const el = inputRef.current;
@@ -104,20 +113,27 @@ export default function Chat({ copy, locale, onBack }: ChatProps) {
     if (!trimmed || isLoading || introLoading) return;
 
     const userMessage: Message = { role: "user", content: trimmed };
-    const nextMessages = [...messages, userMessage];
+    const isFirstMessage = !hasUserMessage;
 
-    setMessages(nextMessages);
+    setMessages((prev) => [...prev, userMessage]);
     setInput("");
     if (inputRef.current) {
       inputRef.current.style.height = "auto";
     }
     setIsLoading(true);
 
+    const apiMessages: Message[] = isFirstMessage
+      ? [
+          { role: "assistant", content: welcomeText },
+          userMessage,
+        ]
+      : [...messages, userMessage];
+
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: nextMessages }),
+        body: JSON.stringify({ messages: apiMessages }),
       });
 
       let data: { message?: string; error?: string };
@@ -184,28 +200,36 @@ export default function Chat({ copy, locale, onBack }: ChatProps) {
         </h1>
       </header>
 
-      {isWelcomeState ? (
-        <div className="flex min-h-0 flex-1 items-center justify-center px-6 py-8">
-          {introLoading ? (
-            <TypingIndicator />
-          ) : (
-            messages[0] && <WelcomeBubble content={messages[0].content} />
-          )}
-        </div>
-      ) : (
-        <div
-          ref={scrollRef}
-          className="flex min-h-0 flex-1 flex-col justify-end overflow-y-auto px-4 py-6"
-        >
-          <div className="mx-auto flex w-full max-w-[680px] flex-col gap-5">
-            {messages.map((message, index) => (
-              <MessageBubble key={index} message={message} />
-            ))}
-            {isLoading && <TypingIndicator />}
-            <div ref={bottomRef} aria-hidden />
+      <div className="relative min-h-0 flex-1">
+        {showWelcomeOverlay && (
+          <div
+            className={`pointer-events-none absolute inset-0 z-10 transition-opacity duration-300 ${
+              welcomeFading ? "opacity-0" : "opacity-100"
+            }`}
+          >
+            {!introLoading && welcomeText && (
+              <p className="absolute left-1/2 top-1/2 w-full max-w-3xl -translate-x-1/2 -translate-y-1/2 whitespace-pre-line px-6 text-center text-[1.8rem] leading-[2.4] text-[#3D3530]">
+                {welcomeText}
+              </p>
+            )}
           </div>
-        </div>
-      )}
+        )}
+
+        {hasUserMessage && (
+          <div
+            ref={scrollRef}
+            className="flex h-full min-h-0 flex-col justify-end overflow-y-auto px-4 py-6"
+          >
+            <div className="mx-auto flex w-full max-w-[680px] flex-col gap-5">
+              {messages.map((message, index) => (
+                <MessageBubble key={index} message={message} />
+              ))}
+              {isLoading && <TypingIndicator />}
+              <div ref={bottomRef} aria-hidden />
+            </div>
+          </div>
+        )}
+      </div>
 
       <footer className="shrink-0 border-t border-neutral-100 bg-white px-4 py-4 sm:px-6">
         <form
@@ -231,14 +255,6 @@ export default function Chat({ copy, locale, onBack }: ChatProps) {
           </button>
         </form>
       </footer>
-    </div>
-  );
-}
-
-function WelcomeBubble({ content }: { content: string }) {
-  return (
-    <div className="mx-auto w-fit max-w-[65%] px-1 text-left text-[15px] leading-[1.7] text-[#3D3530]">
-      {formatAssistantMessage(content)}
     </div>
   );
 }
