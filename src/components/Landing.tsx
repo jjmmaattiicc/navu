@@ -9,7 +9,7 @@ type LandingProps = {
 
 export default function Landing({ copy, onStart }: LandingProps) {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#F7F4EF] px-6 py-12 sm:px-8">
+    <div className="flex min-h-screen flex-col justify-center bg-[#F7F4EF] px-6 py-12 sm:px-8">
       <div className="w-full max-w-lg">
         <header className="mb-12">
           <p className="text-xl font-medium tracking-tight text-[#1a1a1a]/70">
