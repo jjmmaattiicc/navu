@@ -1,18 +1,18 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { AppCopy } from "@/lib/i18n";
+import type { AppCopy, Locale } from "@/lib/i18n";
 import type { Message } from "@/lib/navu";
 
 type ChatProps = {
   copy: AppCopy;
+  locale: Locale;
   onBack: () => void;
 };
 
-export default function Chat({ copy, onBack }: ChatProps) {
-  const [messages, setMessages] = useState<Message[]>([
-    { role: "assistant", content: copy.introMessage },
-  ]);
+export default function Chat({ copy, locale, onBack }: ChatProps) {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [introLoading, setIntroLoading] = useState(true);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -20,6 +20,61 @@ export default function Chat({ copy, onBack }: ChatProps) {
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const isWelcomeState = !messages.some((m) => m.role === "user");
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadOpeningMessage() {
+      try {
+        const res = await fetch("/api/opening", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            locale,
+            language:
+              typeof navigator !== "undefined"
+                ? navigator.language
+                : locale,
+          }),
+        });
+
+        const data: { message?: string; error?: string } = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error ?? `Request failed (${res.status})`);
+        }
+
+        if (!data.message) {
+          throw new Error("No opening message in response");
+        }
+
+        if (!cancelled) {
+          setMessages([{ role: "assistant", content: data.message }]);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          const detail =
+            err instanceof Error ? err.message : "Unknown error occurred";
+          setMessages([
+            {
+              role: "assistant",
+              content: `Error: ${detail}`,
+            },
+          ]);
+        }
+      } finally {
+        if (!cancelled) {
+          setIntroLoading(false);
+        }
+      }
+    }
+
+    loadOpeningMessage();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [locale]);
 
   useEffect(() => {
     if (isWelcomeState) return;
@@ -46,7 +101,7 @@ export default function Chat({ copy, onBack }: ChatProps) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const trimmed = input.trim();
-    if (!trimmed || isLoading) return;
+    if (!trimmed || isLoading || introLoading) return;
 
     const userMessage: Message = { role: "user", content: trimmed };
     const nextMessages = [...messages, userMessage];
@@ -131,14 +186,18 @@ export default function Chat({ copy, onBack }: ChatProps) {
 
       {isWelcomeState ? (
         <div className="flex min-h-0 flex-1 items-center justify-center px-6 py-8">
-          <WelcomeBubble content={messages[0]?.content ?? copy.introMessage} />
+          {introLoading ? (
+            <TypingIndicator />
+          ) : (
+            messages[0] && <WelcomeBubble content={messages[0].content} />
+          )}
         </div>
       ) : (
         <div
           ref={scrollRef}
           className="flex min-h-0 flex-1 flex-col justify-end overflow-y-auto px-4 py-6"
         >
-          <div className="mx-auto flex w-full max-w-[680px] flex-col gap-3">
+          <div className="mx-auto flex w-full max-w-[680px] flex-col gap-5">
             {messages.map((message, index) => (
               <MessageBubble key={index} message={message} />
             ))}
@@ -160,12 +219,12 @@ export default function Chat({ copy, onBack }: ChatProps) {
             onKeyDown={handleKeyDown}
             placeholder={copy.inputPlaceholder}
             rows={2}
-            disabled={isLoading}
+            disabled={isLoading || introLoading}
             className="max-h-80 min-h-[52px] flex-1 resize-none overflow-y-auto rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-[15px] leading-relaxed text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-300 focus:bg-white focus:outline-none disabled:opacity-50"
           />
           <button
             type="submit"
-            disabled={!input.trim() || isLoading}
+            disabled={!input.trim() || isLoading || introLoading}
             className="shrink-0 rounded-2xl bg-neutral-900 px-5 py-3.5 text-[15px] font-medium text-white shadow-sm transition-colors hover:bg-neutral-800 disabled:cursor-not-allowed disabled:bg-neutral-300 disabled:text-neutral-500"
           >
             {copy.sendButton}
@@ -178,10 +237,8 @@ export default function Chat({ copy, onBack }: ChatProps) {
 
 function WelcomeBubble({ content }: { content: string }) {
   return (
-    <div className="mx-auto w-full max-w-lg">
-      <div className="rounded-[20px] bg-[#F0EBE3] px-8 py-8 text-center text-[17px] leading-relaxed text-[#2C2825] shadow-[0_1px_4px_rgba(0,0,0,0.06)] sm:px-10 sm:py-10 sm:text-[18px]">
-        {formatAssistantMessage(content)}
-      </div>
+    <div className="mx-auto w-fit max-w-[65%] px-1 text-left text-[15px] leading-[1.7] text-[#3D3530]">
+      {formatAssistantMessage(content)}
     </div>
   );
 }
@@ -189,17 +246,17 @@ function WelcomeBubble({ content }: { content: string }) {
 function MessageBubble({ message }: { message: Message }) {
   const isUser = message.role === "user";
 
-  return (
-    <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
-      <div
-        className={`max-w-[85%] rounded-[20px] px-4 py-3 text-[15px] leading-relaxed ${
-          isUser
-            ? "bg-[#2C2825] text-white"
-            : "bg-[#F0EBE3] text-[#2C2825] shadow-[0_1px_4px_rgba(0,0,0,0.06)]"
-        }`}
-      >
-        {isUser ? message.content : formatAssistantMessage(message.content)}
+  if (isUser) {
+    return (
+      <div className="w-fit max-w-[65%] self-end rounded-[18px_18px_4px_18px] bg-[#2C2825] px-4 py-2.5 text-left text-[15px] leading-[1.6] text-[#F5F2EC]">
+        {message.content}
       </div>
+    );
+  }
+
+  return (
+    <div className="w-fit max-w-[65%] self-start bg-transparent px-1 py-0 text-left text-[15px] leading-[1.7] text-[#3D3530]">
+      {formatAssistantMessage(message.content)}
     </div>
   );
 }
@@ -212,7 +269,7 @@ function formatAssistantMessage(content: string) {
       {parts.map((part, index) => {
         if (part.startsWith("**") && part.endsWith("**")) {
           return (
-            <strong key={index} className="font-semibold text-[#2C2825]">
+            <strong key={index} className="font-semibold text-[#3D3530]">
               {part.slice(2, -2)}
             </strong>
           );
@@ -225,12 +282,10 @@ function formatAssistantMessage(content: string) {
 
 function TypingIndicator() {
   return (
-    <div className="flex justify-start">
-      <div className="flex items-center gap-1.5 rounded-[20px] bg-[#F0EBE3] px-4 py-3.5 shadow-[0_1px_4px_rgba(0,0,0,0.06)]">
-        <span className="typing-dot h-2 w-2 rounded-full bg-[#2C2825]/35" />
-        <span className="typing-dot typing-dot-delay-1 h-2 w-2 rounded-full bg-[#2C2825]/35" />
-        <span className="typing-dot typing-dot-delay-2 h-2 w-2 rounded-full bg-[#2C2825]/35" />
-      </div>
+    <div className="flex w-fit max-w-[65%] items-center gap-1.5 self-start px-1 py-0">
+      <span className="typing-dot h-2 w-2 rounded-full bg-[#3D3530]/35" />
+      <span className="typing-dot typing-dot-delay-1 h-2 w-2 rounded-full bg-[#3D3530]/35" />
+      <span className="typing-dot typing-dot-delay-2 h-2 w-2 rounded-full bg-[#3D3530]/35" />
     </div>
   );
 }

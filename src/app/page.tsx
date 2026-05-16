@@ -7,7 +7,7 @@ import { useBrowserLocale } from "@/hooks/useBrowserLocale";
 
 export default function Page() {
   const [started, setStarted] = useState(false);
-  const { copy, ready } = useBrowserLocale();
+  const { copy, locale, ready } = useBrowserLocale();
 
   if (!ready) {
     return <div className="min-h-dvh bg-white" />;
@@ -17,5 +17,5 @@ export default function Page() {
     return <Landing copy={copy} onStart={() => setStarted(true)} />;
   }
 
-  return <Chat copy={copy} onBack={() => setStarted(false)} />;
+  return <Chat copy={copy} locale={locale} onBack={() => setStarted(false)} />;
 }
