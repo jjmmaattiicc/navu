@@ -218,7 +218,7 @@ export default function Chat({ copy, locale, onBack }: ChatProps) {
         {hasUserMessage && (
           <div
             ref={scrollRef}
-            className="flex h-full min-h-0 flex-col justify-end overflow-y-auto px-4 py-6"
+            className="flex h-[calc(100vh-120px)] flex-col justify-end overflow-x-hidden overflow-y-auto px-4 py-6"
           >
             <div className="mx-auto flex w-full max-w-[680px] flex-col gap-5">
               {messages.map((message, index) => (
