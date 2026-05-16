@@ -15,11 +15,29 @@ export default function Chat({ copy, onBack }: ChatProps) {
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const shouldAutoScrollRef = useRef(true);
+
+  function isNearBottom() {
+    const el = scrollRef.current;
+    if (!el) return true;
+    return el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+  }
+
+  function scrollToBottom(behavior: ScrollBehavior = "smooth") {
+    messagesEndRef.current?.scrollIntoView({ behavior });
+  }
+
+  function handleScroll() {
+    shouldAutoScrollRef.current = isNearBottom();
+  }
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (shouldAutoScrollRef.current) {
+      scrollToBottom(messages.length <= 2 ? "instant" : "smooth");
+    }
   }, [messages, isLoading]);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -33,6 +51,7 @@ export default function Chat({ copy, onBack }: ChatProps) {
     setMessages(nextMessages);
     setInput("");
     setIsLoading(true);
+    shouldAutoScrollRef.current = true;
 
     try {
       const res = await fetch("/api/chat", {
@@ -98,8 +117,12 @@ export default function Chat({ copy, onBack }: ChatProps) {
         </h1>
       </header>
 
-      <div className="flex min-h-0 flex-1 flex-col justify-end overflow-y-auto px-4 pb-2 pt-3 sm:px-6">
-        <div className="mx-auto flex w-full max-w-2xl flex-col justify-end gap-3">
+      <div
+        ref={scrollRef}
+        onScroll={handleScroll}
+        className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6"
+      >
+        <div className="mx-auto flex w-full max-w-2xl flex-col gap-3">
           {messages.map((message, index) => (
             <MessageBubble key={index} message={message} />
           ))}
