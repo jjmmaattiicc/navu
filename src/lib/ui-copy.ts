@@ -1,9 +1,13 @@
 import type { Locale } from "@/lib/i18n";
+import { CHAT_INTROS } from "@/lib/chat-intros";
+import { PRIVACY_LINES } from "@/lib/privacy-lines";
 import { TRUST_LINES } from "@/lib/trust-lines";
 
 export type UiStrings = {
   trustLine: string;
   durationLine: string;
+  privacyLine: string;
+  introMessage: string;
   backButton: string;
   inputPlaceholder: string;
 };
@@ -11,11 +15,13 @@ export type UiStrings = {
 const en: UiStrings = {
   trustLine: TRUST_LINES.en,
   durationLine: "Usually 10-15 minutes. You'll leave with clarity.",
+  privacyLine: PRIVACY_LINES.en,
+  introMessage: CHAT_INTROS.en,
   backButton: "Back",
   inputPlaceholder: "Write freely...",
 };
 
-const strings: Partial<Record<Locale, UiStrings>> = {
+const strings: Partial<Record<Locale, Partial<UiStrings>>> = {
   en,
   hr: {
     trustLine: TRUST_LINES.hr,
@@ -153,9 +159,11 @@ const strings: Partial<Record<Locale, UiStrings>> = {
 };
 
 export function getUiStrings(locale: Locale): UiStrings {
-  const base = strings[locale] ?? en;
   return {
-    ...base,
+    ...en,
+    ...strings[locale],
     trustLine: TRUST_LINES[locale] ?? TRUST_LINES.en,
+    privacyLine: PRIVACY_LINES[locale] ?? PRIVACY_LINES.en,
+    introMessage: CHAT_INTROS[locale] ?? CHAT_INTROS.en,
   };
 }

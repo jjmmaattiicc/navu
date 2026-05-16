@@ -1,1 +1,25 @@
 @import "tailwindcss";
+
+@keyframes calm-typing-dot {
+  0%,
+  100% {
+    opacity: 0.2;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 0.75;
+    transform: translateY(-1px);
+  }
+}
+
+.typing-dot {
+  animation: calm-typing-dot 1.2s ease-in-out infinite;
+}
+
+.typing-dot-delay-1 {
+  animation-delay: 1.2s;
+}
+
+.typing-dot-delay-2 {
+  animation-delay: 2.4s;
+}

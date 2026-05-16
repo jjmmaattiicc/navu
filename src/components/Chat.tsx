@@ -11,34 +11,27 @@ type ChatProps = {
 
 export default function Chat({ copy, onBack }: ChatProps) {
   const [messages, setMessages] = useState<Message[]>([
-    { role: "assistant", content: copy.greeting },
+    { role: "assistant", content: copy.introMessage },
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const shouldAutoScrollRef = useRef(true);
-
-  function isNearBottom() {
-    const el = scrollRef.current;
-    if (!el) return true;
-    return el.scrollHeight - el.scrollTop - el.clientHeight < 80;
-  }
-
-  function scrollToBottom(behavior: ScrollBehavior = "smooth") {
-    messagesEndRef.current?.scrollIntoView({ behavior });
-  }
-
-  function handleScroll() {
-    shouldAutoScrollRef.current = isNearBottom();
-  }
 
   useEffect(() => {
-    if (shouldAutoScrollRef.current) {
-      scrollToBottom(messages.length <= 2 ? "instant" : "smooth");
-    }
+    const behavior = messages.length <= 2 ? "auto" : "smooth";
+    requestAnimationFrame(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior, block: "end" });
+    });
   }, [messages, isLoading]);
+
+  useEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 320)}px`;
+  }, [input]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -50,8 +43,10 @@ export default function Chat({ copy, onBack }: ChatProps) {
 
     setMessages(nextMessages);
     setInput("");
+    if (inputRef.current) {
+      inputRef.current.style.height = "auto";
+    }
     setIsLoading(true);
-    shouldAutoScrollRef.current = true;
 
     try {
       const res = await fetch("/api/chat", {
@@ -95,15 +90,15 @@ export default function Chat({ copy, onBack }: ChatProps) {
     }
   }
 
-  function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSubmit(e);
-    }
+  function handleInputChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
+    setInput(e.target.value);
+    const el = e.target;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 320)}px`;
   }
 
   return (
-    <div className="flex h-dvh flex-col bg-white">
+    <div className="flex h-screen flex-col bg-white">
       <header className="flex shrink-0 items-center gap-3 border-b border-neutral-100 px-4 py-3 sm:px-6">
         <button
           type="button"
@@ -119,10 +114,9 @@ export default function Chat({ copy, onBack }: ChatProps) {
 
       <div
         ref={scrollRef}
-        onScroll={handleScroll}
-        className="min-h-0 flex-1 overflow-y-auto overscroll-contain"
+        className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain"
       >
-        <div className="mx-auto flex min-h-full w-full max-w-[720px] flex-col justify-end gap-3 px-4 pb-2 pt-3 sm:px-6">
+        <div className="mt-auto mx-auto flex w-full max-w-[680px] flex-col justify-end gap-3 px-4 pb-2 pt-3 sm:px-6">
           {messages.map((message, index) => (
             <MessageBubble key={index} message={message} />
           ))}
@@ -134,17 +128,16 @@ export default function Chat({ copy, onBack }: ChatProps) {
       <footer className="shrink-0 border-t border-neutral-100 bg-white px-4 py-4 sm:px-6">
         <form
           onSubmit={handleSubmit}
-          className="mx-auto flex w-full max-w-[720px] items-end gap-3"
+          className="mx-auto flex w-full max-w-[680px] items-end gap-3"
         >
           <textarea
             ref={inputRef}
             value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
+            onChange={handleInputChange}
             placeholder={copy.inputPlaceholder}
-            rows={1}
+            rows={2}
             disabled={isLoading}
-            className="max-h-32 min-h-[44px] flex-1 resize-none rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-[15px] text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-300 focus:bg-white focus:outline-none disabled:opacity-50"
+            className="max-h-80 min-h-[52px] flex-1 resize-none overflow-y-auto rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-[15px] leading-relaxed text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-300 focus:bg-white focus:outline-none disabled:opacity-50"
           />
           <button
             type="submit"
@@ -181,9 +174,9 @@ function TypingIndicator() {
   return (
     <div className="flex justify-start">
       <div className="flex items-center gap-1.5 rounded-2xl bg-neutral-100 px-4 py-3.5">
-        <span className="h-2 w-2 animate-bounce rounded-full bg-neutral-500 [animation-delay:0ms]" />
-        <span className="h-2 w-2 animate-bounce rounded-full bg-neutral-500 [animation-delay:150ms]" />
-        <span className="h-2 w-2 animate-bounce rounded-full bg-neutral-500 [animation-delay:300ms]" />
+        <span className="typing-dot h-2 w-2 rounded-full bg-neutral-400" />
+        <span className="typing-dot typing-dot-delay-1 h-2 w-2 rounded-full bg-neutral-400" />
+        <span className="typing-dot typing-dot-delay-2 h-2 w-2 rounded-full bg-neutral-400" />
       </div>
     </div>
   );
