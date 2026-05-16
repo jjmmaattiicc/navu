@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { AppCopy, Locale } from "@/lib/i18n";
-import type { Message } from "@/lib/navu";
+import { stripRoleLabels, type Message } from "@/lib/navu";
 
 type ChatProps = {
   copy: AppCopy;
@@ -150,7 +150,10 @@ export default function Chat({ copy, locale, onBack }: ChatProps) {
       if (data.message?.trim()) {
         setMessages((prev) => [
           ...prev,
-          { role: "assistant", content: data.message! },
+          {
+            role: "assistant",
+            content: stripRoleLabels(data.message!),
+          },
         ]);
       }
     } catch (err) {
@@ -266,14 +269,14 @@ function MessageBubble({ message }: { message: Message }) {
         className="w-fit max-w-[65%] self-end bg-[#2C2825] px-4 py-2.5 text-left text-[15px] leading-[1.6] text-[#F5F2EC]"
         style={{ borderRadius: "18px 18px 4px 18px" }}
       >
-        {message.content}
+        {stripRoleLabels(message.content)}
       </div>
     );
   }
 
   return (
     <div className="w-fit max-w-[65%] self-start bg-transparent px-1 py-0 text-left text-[15px] leading-[1.7] text-[#3D3530]">
-      {formatAssistantMessage(message.content)}
+      {formatAssistantMessage(stripRoleLabels(message.content))}
     </div>
   );
 }

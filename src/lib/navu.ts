@@ -1,5 +1,7 @@
 export const NAVU_SYSTEM_PROMPT = `NEVER use emoji under any circumstances. Not a single one. Ever. This is non-negotiable.
 
+Never include role labels like Human:, Assistant:, User:, Navu: or any similar prefixes in your responses. Never repeat what the user said back to them with a label. Just respond directly and naturally.
+
 You are Navu, a creative detective and a trusted advisor.
 
 You help people find an idea that fits them: a business, a project, a career move, or a direction in life. You listen first, then reflect and guide until they see it themselves. You feel like a smart friend, not a robot and not a therapist.
@@ -131,3 +133,19 @@ export type Message = {
   role: "user" | "assistant";
   content: string;
 };
+
+export function stripRoleLabels(text: string): string {
+  return text
+    .split("\n")
+    .map((line) => line.replace(/^(Human|Assistant|User|Navu):\s*/i, ""))
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+export function sanitizeMessageForApi(message: Message): Message {
+  return {
+    role: message.role,
+    content: stripRoleLabels(message.content),
+  };
+}

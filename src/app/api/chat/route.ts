@@ -1,5 +1,10 @@
 import Anthropic, { APIError } from "@anthropic-ai/sdk";
-import { NAVU_SYSTEM_PROMPT, type Message } from "@/lib/navu";
+import {
+  NAVU_SYSTEM_PROMPT,
+  sanitizeMessageForApi,
+  stripRoleLabels,
+  type Message,
+} from "@/lib/navu";
 
 const CLAUDE_MODEL =
   process.env.CLAUDE_MODEL?.trim() ?? "claude-sonnet-4-6";
@@ -47,14 +52,12 @@ export async function POST(request: Request) {
       model: CLAUDE_MODEL,
       max_tokens: 1024,
       system: NAVU_SYSTEM_PROMPT,
-      messages: messages.map((m) => ({
-        role: m.role,
-        content: m.content,
-      })),
+      messages: messages.map((m) => sanitizeMessageForApi(m)),
     });
 
     const textBlock = response.content.find((block) => block.type === "text");
-    const reply = textBlock?.type === "text" ? textBlock.text.trim() : "";
+    const rawReply = textBlock?.type === "text" ? textBlock.text.trim() : "";
+    const reply = stripRoleLabels(rawReply);
 
     if (!reply || isSilencePlaceholder(reply)) {
       return Response.json({ message: "" });
