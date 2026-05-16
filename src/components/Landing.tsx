@@ -1,12 +1,6 @@
 "use client";
 
-import { Lora } from "next/font/google";
 import type { AppCopy } from "@/lib/i18n";
-
-const lora = Lora({
-  subsets: ["latin"],
-  weight: ["500", "600"],
-});
 
 type LandingProps = {
   copy: AppCopy;
@@ -24,9 +18,7 @@ export default function Landing({ copy, onStart }: LandingProps) {
         </header>
 
         <div className="space-y-5">
-          <h1
-            className={`${lora.className} text-[2.5rem] font-medium leading-[1.15] tracking-tight text-[#1a1a1a] sm:text-5xl`}
-          >
+          <h1 className="text-[2.5rem] font-medium leading-[1.15] tracking-tight text-[#1a1a1a] sm:text-5xl">
             {copy.tagline}
           </h1>
 

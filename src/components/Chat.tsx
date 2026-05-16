@@ -16,17 +16,21 @@ export default function Chat({ copy, onBack }: ChatProps) {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const behavior = messages.length <= 2 ? "auto" : "smooth";
-    requestAnimationFrame(() => {
-      el.scrollTo({ top: el.scrollHeight, behavior });
-    });
-  }, [messages, isLoading]);
+    const container = scrollRef.current;
+    if (!container) return;
+
+    const isNearBottom =
+      container.scrollHeight - container.scrollTop - container.clientHeight <
+      100;
+
+    if (isNearBottom) {
+      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages]);
 
   useEffect(() => {
     const el = inputRef.current;
@@ -124,14 +128,14 @@ export default function Chat({ copy, onBack }: ChatProps) {
       <div className="flex h-[calc(100vh-60px)] min-h-0 flex-col">
         <div
           ref={scrollRef}
-          className="flex min-h-0 flex-1 flex-col justify-end overflow-y-auto px-4 py-6"
+          className="min-h-0 flex-1 overflow-y-auto px-4 py-6"
         >
-          <div className="mx-auto flex w-full max-w-[680px] flex-col gap-3">
+          <div className="mx-auto flex min-h-full w-full max-w-[680px] flex-col justify-end gap-3">
             {messages.map((message, index) => (
               <MessageBubble key={index} message={message} />
             ))}
             {isLoading && <TypingIndicator />}
-            <div ref={messagesEndRef} aria-hidden />
+            <div ref={bottomRef} aria-hidden />
           </div>
         </div>
 

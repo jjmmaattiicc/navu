@@ -1,4 +1,19 @@
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&family=DM+Sans:wght@300;400;500&display=swap");
+
 @import "tailwindcss";
+
+h1,
+h2 {
+  font-family: "Playfair Display", serif;
+}
+
+body,
+p,
+input,
+button {
+  font-family: "DM Sans", sans-serif;
+  font-weight: 400;
+}
 
 @keyframes calm-typing-dot {
   0%,
