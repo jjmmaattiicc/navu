@@ -1,9 +1,8 @@
 import Anthropic, { APIError } from "@anthropic-ai/sdk";
 import {
-  extractAssistantOnlyReply,
+  finalizeAssistantReply,
   NAVU_SYSTEM_PROMPT,
   prepareMessagesForApi,
-  stripRoleLabels,
   type Message,
 } from "@/lib/navu";
 
@@ -28,9 +27,20 @@ function formatApiError(error: unknown): { message: string; status: number } {
   return { message: String(error), status: 500 };
 }
 
+function toAnthropicMessages(
+  messages: Message[]
+): Array<{ role: "user" | "assistant"; content: string }> {
+  return messages.map((message) => ({
+    role: message.role,
+    content: message.content,
+  }));
+}
+
 export async function POST(request: Request) {
   try {
     const { messages } = (await request.json()) as { messages: Message[] };
+
+    console.log("[chat] incoming messages:", JSON.stringify(messages, null, 2));
 
     if (!messages?.length) {
       return Response.json(
@@ -40,6 +50,11 @@ export async function POST(request: Request) {
     }
 
     const preparedMessages = prepareMessagesForApi(messages);
+
+    console.log(
+      "[chat] prepared for API:",
+      JSON.stringify(preparedMessages, null, 2)
+    );
 
     if (!preparedMessages.length) {
       return Response.json(
@@ -57,17 +72,28 @@ export async function POST(request: Request) {
     }
 
     const anthropic = new Anthropic({ apiKey });
+    const anthropicMessages = toAnthropicMessages(preparedMessages);
+
+    console.log(
+      "[chat] anthropic payload:",
+      JSON.stringify(anthropicMessages, null, 2)
+    );
 
     const response = await anthropic.messages.create({
       model: CLAUDE_MODEL,
       max_tokens: 1024,
       system: NAVU_SYSTEM_PROMPT,
-      messages: preparedMessages,
+      messages: anthropicMessages,
     });
 
     const textBlock = response.content.find((block) => block.type === "text");
     const rawReply = textBlock?.type === "text" ? textBlock.text.trim() : "";
-    const reply = extractAssistantOnlyReply(stripRoleLabels(rawReply));
+
+    console.log("[chat] raw AI reply:", rawReply);
+
+    const reply = finalizeAssistantReply(rawReply, preparedMessages);
+
+    console.log("[chat] final assistant reply:", reply);
 
     if (!reply || isSilencePlaceholder(reply)) {
       return Response.json({ message: "" });

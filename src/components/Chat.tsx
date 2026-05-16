@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { AppCopy, Locale } from "@/lib/i18n";
-import { stripRoleLabels, type Message } from "@/lib/navu";
+import { finalizeAssistantReply, type Message } from "@/lib/navu";
 
 type ChatProps = {
   copy: AppCopy;
@@ -115,6 +115,13 @@ export default function Chat({ copy, locale, onBack }: ChatProps) {
     const userMessage: Message = { role: "user", content: trimmed };
     const isFirstMessage = !hasUserMessage;
 
+    const historyForApi: Message[] = isFirstMessage
+      ? [
+          { role: "assistant", content: welcomeText },
+          userMessage,
+        ]
+      : [...messages, userMessage];
+
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
     if (inputRef.current) {
@@ -122,18 +129,11 @@ export default function Chat({ copy, locale, onBack }: ChatProps) {
     }
     setIsLoading(true);
 
-    const apiMessages: Message[] = isFirstMessage
-      ? [
-          { role: "assistant", content: welcomeText },
-          userMessage,
-        ]
-      : [...messages, userMessage];
-
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: apiMessages }),
+        body: JSON.stringify({ messages: historyForApi }),
       });
 
       let data: { message?: string; error?: string };
@@ -147,12 +147,16 @@ export default function Chat({ copy, locale, onBack }: ChatProps) {
         throw new Error(data.error ?? `Request failed (${res.status})`);
       }
 
-      if (data.message?.trim()) {
+      const assistantContent = data.message
+        ? finalizeAssistantReply(data.message, historyForApi)
+        : "";
+
+      if (assistantContent.trim()) {
         setMessages((prev) => [
           ...prev,
           {
             role: "assistant",
-            content: stripRoleLabels(data.message!),
+            content: assistantContent,
           },
         ]);
       }
@@ -285,14 +289,14 @@ function MessageBubble({ message }: { message: Message }) {
         className="w-fit max-w-[65%] self-end bg-[#2C2825] px-4 py-2.5 text-left text-[15px] leading-[1.6] text-[#F5F2EC]"
         style={{ borderRadius: "18px 18px 4px 18px" }}
       >
-        {stripRoleLabels(message.content)}
+        {message.content}
       </div>
     );
   }
 
   return (
     <div className="w-fit max-w-[65%] self-start bg-transparent px-1 py-0 text-left text-[15px] leading-[1.7] text-[#3D3530]">
-      {formatAssistantMessage(stripRoleLabels(message.content))}
+      {formatAssistantMessage(message.content)}
     </div>
   );
 }

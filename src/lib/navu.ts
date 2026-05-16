@@ -212,6 +212,68 @@ export function extractAssistantOnlyReply(text: string): string {
   return combined || text.trim();
 }
 
+function normalizeForComparison(text: string): string {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^\p{L}\p{N}\s]+/gu, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+export function getLastUserMessage(messages: Message[]): string | undefined {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    if (messages[i].role === "user") {
+      return messages[i].content;
+    }
+  }
+  return undefined;
+}
+
+export function stripEchoOfLastUserMessage(
+  reply: string,
+  lastUserMessage: string | undefined
+): string {
+  if (!reply.trim() || !lastUserMessage?.trim()) {
+    return reply.trim();
+  }
+
+  const userNorm = normalizeForComparison(lastUserMessage);
+  const replyNorm = normalizeForComparison(reply);
+
+  if (replyNorm === userNorm) {
+    return "";
+  }
+
+  const filteredLines = reply.split("\n").filter((line) => {
+    const trimmed = line.trim();
+    if (!trimmed) return true;
+    return normalizeForComparison(trimmed) !== userNorm;
+  });
+
+  let result = filteredLines.join("\n").trim();
+
+  while (result) {
+    const firstLine = result.split("\n")[0]?.trim() ?? "";
+    if (firstLine && normalizeForComparison(firstLine) === userNorm) {
+      result = result.split("\n").slice(1).join("\n").trim();
+    } else {
+      break;
+    }
+  }
+
+  return result;
+}
+
+export function finalizeAssistantReply(
+  rawReply: string,
+  conversationMessages: Message[]
+): string {
+  const cleaned = extractAssistantOnlyReply(stripRoleLabels(rawReply));
+  const lastUser = getLastUserMessage(conversationMessages);
+  return stripEchoOfLastUserMessage(cleaned, lastUser);
+}
+
 function isValidRole(role: unknown): role is Message["role"] {
   return role === "user" || role === "assistant";
 }
@@ -222,16 +284,17 @@ export function prepareMessagesForApi(messages: Message[]): Message[] {
   for (const message of messages) {
     if (!isValidRole(message.role)) continue;
 
-    const content = sanitizeContentForRole(message.content, message.role);
+    const role = message.role;
+    const content = sanitizeContentForRole(String(message.content ?? ""), role);
     if (!content) continue;
 
     const last = prepared[prepared.length - 1];
-    if (last && last.role === message.role) {
+    if (last && last.role === role) {
       last.content = `${last.content}\n\n${content}`;
       continue;
     }
 
-    prepared.push({ role: message.role, content });
+    prepared.push({ role, content });
   }
 
   return prepared;
