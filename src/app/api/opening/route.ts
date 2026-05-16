@@ -1,8 +1,8 @@
 import Anthropic, { APIError } from "@anthropic-ai/sdk";
 import { OPENING_MESSAGE_PROMPT } from "@/lib/navu";
 
-const CLAUDE_MODEL =
-  process.env.CLAUDE_MODEL?.trim() ?? "claude-sonnet-4-6";
+/** Fastest model for short welcome copy only; chat route is unchanged. */
+const OPENING_MODEL = "claude-haiku-4-5";
 
 function formatApiError(error: unknown): { message: string; status: number } {
   if (error instanceof APIError) {
@@ -36,9 +36,10 @@ export async function POST(request: Request) {
     const languageTag = body.language?.trim() || body.locale?.trim() || "en";
     const anthropic = new Anthropic({ apiKey });
 
-    const response = await anthropic.messages.create({
-      model: CLAUDE_MODEL,
-      max_tokens: 256,
+    const stream = await anthropic.messages.create({
+      model: OPENING_MODEL,
+      max_tokens: 60,
+      stream: true,
       system: OPENING_MESSAGE_PROMPT,
       messages: [
         {
@@ -48,17 +49,31 @@ export async function POST(request: Request) {
       ],
     });
 
-    const textBlock = response.content.find((block) => block.type === "text");
-    const message = textBlock?.type === "text" ? textBlock.text.trim() : "";
+    const encoder = new TextEncoder();
+    const readable = new ReadableStream({
+      async start(controller) {
+        try {
+          for await (const event of stream) {
+            if (
+              event.type === "content_block_delta" &&
+              event.delta.type === "text_delta"
+            ) {
+              controller.enqueue(encoder.encode(event.delta.text));
+            }
+          }
+          controller.close();
+        } catch (error) {
+          controller.error(error);
+        }
+      },
+    });
 
-    if (!message) {
-      return Response.json(
-        { error: "Claude returned an empty response" },
-        { status: 502 }
-      );
-    }
-
-    return Response.json({ message });
+    return new Response(readable, {
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Cache-Control": "no-cache",
+      },
+    });
   } catch (error) {
     const { message, status } = formatApiError(error);
     console.error("Opening API error:", message);

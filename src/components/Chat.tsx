@@ -41,18 +41,38 @@ export default function Chat({ copy, locale, onBack }: ChatProps) {
           }),
         });
 
-        const data: { message?: string; error?: string } = await res.json();
-
         if (!res.ok) {
+          const data: { error?: string } = await res.json();
           throw new Error(data.error ?? `Request failed (${res.status})`);
         }
 
-        if (!data.message) {
+        const reader = res.body?.getReader();
+        if (!reader) {
+          throw new Error("No opening message in response");
+        }
+
+        const decoder = new TextDecoder();
+        let accumulated = "";
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          accumulated += decoder.decode(value, { stream: true });
+          if (cancelled) return;
+          setWelcomeText(accumulated);
+          setIntroLoading(false);
+        }
+
+        accumulated += decoder.decode();
+        const message = accumulated.trim();
+
+        if (!message) {
           throw new Error("No opening message in response");
         }
 
         if (!cancelled) {
-          setWelcomeText(data.message);
+          setWelcomeText(message);
+          setIntroLoading(false);
         }
       } catch (err) {
         if (!cancelled) {
