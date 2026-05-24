@@ -1,6 +1,8 @@
 import Anthropic, { APIError } from "@anthropic-ai/sdk";
 import {
+  extractClosingSummary,
   finalizeAssistantReply,
+  isClosingMessage,
   NAVU_SYSTEM_PROMPT,
   prepareMessagesForApi,
   type Message,
@@ -99,7 +101,13 @@ export async function POST(request: Request) {
       return Response.json({ message: "" });
     }
 
-    return Response.json({ message: reply });
+    const isClosing = isClosingMessage(reply);
+
+    return Response.json({
+      message: reply,
+      isClosing,
+      ...(isClosing ? { summary: extractClosingSummary(reply) } : {}),
+    });
   } catch (error) {
     const { message, status } = formatApiError(error);
     console.error("Chat API error:", message);

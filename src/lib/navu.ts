@@ -282,6 +282,56 @@ export function finalizeAssistantReply(
   return stripEchoOfLastUserMessage(cleaned, lastUser);
 }
 
+const CLOSING_STEP_PATTERNS = [
+  /\bjedan\s+korak\b/i,
+  /\bjeden\s+krok\b/i,
+  /\bone\s+step\b/i,
+  /\bein(?:e[rnm])?\s+schritt\b/i,
+  /\bun\s+paso\b/i,
+  /\bune\s+étape\b/i,
+  /\bun\s+passo\b/i,
+  /\bum\s+passo\b/i,
+  /\bett\s+steg\b/i,
+  /\ben\s+steg\b/i,
+  /\byksi\s+askel\b/i,
+  /\bодин\s+шаг\b/i,
+  /\bодин\s+крок\b/i,
+  /\been\s+stap\b/i,
+  /\bun\s+pas\b/i,
+  /\bkrok\s+na\s+dnes\b/i,
+  /\bnext\s+step\b/i,
+  /\bprochaine\s+étape\b/i,
+  /\bpróximo\s+paso\b/i,
+];
+
+export function splitClosingParts(text: string): string[] {
+  return text
+    .trim()
+    .split(/\n\s*\n/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
+
+/** Closing reflection: three parts separated by blank lines, ending with a concrete step. */
+export function isClosingMessage(text: string): boolean {
+  const trimmed = text.trim();
+  if (!trimmed) return false;
+
+  const parts = splitClosingParts(trimmed);
+  if (parts.length < 3) return false;
+
+  return CLOSING_STEP_PATTERNS.some((pattern) => pattern.test(trimmed));
+}
+
+/** Card summary: conversation recap + core insight (parts 1–2 of the closing). */
+export function extractClosingSummary(text: string): string {
+  const parts = splitClosingParts(text);
+  if (parts.length >= 2) {
+    return `${parts[0]}\n\n${parts[1]}`;
+  }
+  return text.trim();
+}
+
 function isValidRole(role: unknown): role is Message["role"] {
   return role === "user" || role === "assistant";
 }

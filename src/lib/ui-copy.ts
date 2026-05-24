@@ -9,6 +9,12 @@ export type UiStrings = {
   privacyLine: string;
   introMessage: string;
   backButton: string;
+  newConversationButton: string;
+  summaryCardTitle: string;
+  shareInsightButton: string;
+  shareCopiedLabel: string;
+  shareClipboardHeader: string;
+  shareClipboardFooter: string;
   inputPlaceholder: string;
 };
 
@@ -18,6 +24,12 @@ const en: UiStrings = {
   privacyLine: PRIVACY_LINES.en,
   introMessage: CHAT_INTROS.en,
   backButton: "Back",
+  newConversationButton: "New conversation",
+  summaryCardTitle: "What you discovered today",
+  shareInsightButton: "Share insight",
+  shareCopiedLabel: "Copied",
+  shareClipboardHeader: "What I discovered with Navu today",
+  shareClipboardFooter: "— Navu",
   inputPlaceholder: "Write freely...",
 };
 
@@ -27,6 +39,12 @@ const strings: Partial<Record<Locale, Partial<UiStrings>>> = {
     trustLine: TRUST_LINES.hr,
     durationLine: "Obično 10-15 minuta. Otići ćete s jasnoćom.",
     backButton: "Natrag",
+    newConversationButton: "Novi razgovor",
+    summaryCardTitle: "Što si danas otkrio",
+    shareInsightButton: "Podijeli uvid",
+    shareCopiedLabel: "Kopirano",
+    shareClipboardHeader: "Što sam danas otkrio/la s Navu",
+    shareClipboardFooter: "— Navu",
     inputPlaceholder: "Pišite slobodno...",
   },
   de: {
@@ -34,6 +52,12 @@ const strings: Partial<Record<Locale, Partial<UiStrings>>> = {
       "Keine falschen Antworten. Kein Urteil. Nur du und deine Gedanken.",
     durationLine: "Meist 10-15 Minuten. Du gehst mit Klarheit.",
     backButton: "Zurück",
+    newConversationButton: "Neues Gespräch",
+    summaryCardTitle: "Was du heute entdeckt hast",
+    shareInsightButton: "Einsicht teilen",
+    shareCopiedLabel: "Kopiert",
+    shareClipboardHeader: "Was ich heute mit Navu entdeckt habe",
+    shareClipboardFooter: "— Navu",
     inputPlaceholder: "Schreib frei...",
   },
   es: {
@@ -41,6 +65,12 @@ const strings: Partial<Record<Locale, Partial<UiStrings>>> = {
       "No hay respuestas incorrectas. Sin juicios. Solo tú y tus pensamientos.",
     durationLine: "Suele durar 10-15 minutos. Saldrás con claridad.",
     backButton: "Volver",
+    newConversationButton: "Nueva conversación",
+    summaryCardTitle: "Lo que descubriste hoy",
+    shareInsightButton: "Compartir insight",
+    shareCopiedLabel: "Copiado",
+    shareClipboardHeader: "Lo que descubrí hoy con Navu",
+    shareClipboardFooter: "— Navu",
     inputPlaceholder: "Escribe con libertad...",
   },
   fr: {
@@ -48,6 +78,12 @@ const strings: Partial<Record<Locale, Partial<UiStrings>>> = {
       "Pas de mauvaises réponses. Pas de jugement. Juste vous et vos pensées.",
     durationLine: "Environ 10-15 minutes. Vous repartirez avec de la clarté.",
     backButton: "Retour",
+    newConversationButton: "Nouvelle conversation",
+    summaryCardTitle: "Ce que tu as découvert aujourd'hui",
+    shareInsightButton: "Partager l'insight",
+    shareCopiedLabel: "Copié",
+    shareClipboardHeader: "Ce que j'ai découvert aujourd'hui avec Navu",
+    shareClipboardFooter: "— Navu",
     inputPlaceholder: "Écrivez librement...",
   },
   it: {

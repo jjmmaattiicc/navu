@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { AppCopy, Locale } from "@/lib/i18n";
 import { finalizeAssistantReply, type Message } from "@/lib/navu";
+import { formatInsightForClipboard } from "@/lib/share-insight";
 
 type ChatProps = {
   copy: AppCopy;
@@ -18,81 +19,94 @@ export default function Chat({ copy, locale, onBack }: ChatProps) {
   const [welcomeFading, setWelcomeFading] = useState(false);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [closingSummary, setClosingSummary] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const openingFetchId = useRef(0);
 
   const hasUserMessage = messages.some((m) => m.role === "user");
 
-  useEffect(() => {
-    let cancelled = false;
+  const loadOpeningMessage = useCallback(async () => {
+    const fetchId = ++openingFetchId.current;
+    setIntroLoading(true);
+    setWelcomeText("");
 
-    async function loadOpeningMessage() {
-      try {
-        const res = await fetch("/api/opening", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            locale,
-            language:
-              typeof navigator !== "undefined"
-                ? navigator.language
-                : locale,
-          }),
-        });
+    try {
+      const res = await fetch("/api/opening", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          locale,
+          language:
+            typeof navigator !== "undefined" ? navigator.language : locale,
+        }),
+      });
 
-        if (!res.ok) {
-          const data: { error?: string } = await res.json();
-          throw new Error(data.error ?? `Request failed (${res.status})`);
-        }
+      if (!res.ok) {
+        const data: { error?: string } = await res.json();
+        throw new Error(data.error ?? `Request failed (${res.status})`);
+      }
 
-        const reader = res.body?.getReader();
-        if (!reader) {
-          throw new Error("No opening message in response");
-        }
+      const reader = res.body?.getReader();
+      if (!reader) {
+        throw new Error("No opening message in response");
+      }
 
-        const decoder = new TextDecoder();
-        let accumulated = "";
+      const decoder = new TextDecoder();
+      let accumulated = "";
 
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          accumulated += decoder.decode(value, { stream: true });
-          if (cancelled) return;
-          setWelcomeText(accumulated);
-          setIntroLoading(false);
-        }
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        accumulated += decoder.decode(value, { stream: true });
+        if (fetchId !== openingFetchId.current) return;
+        setWelcomeText(accumulated);
+        setIntroLoading(false);
+      }
 
-        accumulated += decoder.decode();
-        const message = accumulated.trim();
+      accumulated += decoder.decode();
+      const message = accumulated.trim();
 
-        if (!message) {
-          throw new Error("No opening message in response");
-        }
+      if (!message) {
+        throw new Error("No opening message in response");
+      }
 
-        if (!cancelled) {
-          setWelcomeText(message);
-          setIntroLoading(false);
-        }
-      } catch (err) {
-        if (!cancelled) {
-          const detail =
-            err instanceof Error ? err.message : "Unknown error occurred";
-          setWelcomeText(`Error: ${detail}`);
-        }
-      } finally {
-        if (!cancelled) {
-          setIntroLoading(false);
-        }
+      if (fetchId === openingFetchId.current) {
+        setWelcomeText(message);
+        setIntroLoading(false);
+      }
+    } catch (err) {
+      if (fetchId === openingFetchId.current) {
+        const detail =
+          err instanceof Error ? err.message : "Unknown error occurred";
+        setWelcomeText(`Error: ${detail}`);
+      }
+    } finally {
+      if (fetchId === openingFetchId.current) {
+        setIntroLoading(false);
       }
     }
-
-    loadOpeningMessage();
-
-    return () => {
-      cancelled = true;
-    };
   }, [locale]);
+
+  useEffect(() => {
+    loadOpeningMessage();
+  }, [loadOpeningMessage]);
+
+  function startNewConversation() {
+    openingFetchId.current += 1;
+    setMessages([]);
+    setClosingSummary(null);
+    setInput("");
+    setIsLoading(false);
+    setShowWelcomeOverlay(true);
+    setWelcomeFading(false);
+    if (inputRef.current) {
+      inputRef.current.style.height = "auto";
+    }
+    loadOpeningMessage();
+    inputRef.current?.focus();
+  }
 
   useEffect(() => {
     if (!hasUserMessage || welcomeFading) return;
@@ -118,7 +132,7 @@ export default function Chat({ copy, locale, onBack }: ChatProps) {
     if (isNearBottom) {
       bottomRef.current?.scrollIntoView({ behavior: "smooth" });
     }
-  }, [messages, isLoading, hasUserMessage]);
+  }, [messages, isLoading, hasUserMessage, closingSummary]);
 
   useEffect(() => {
     const el = inputRef.current;
@@ -130,7 +144,7 @@ export default function Chat({ copy, locale, onBack }: ChatProps) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const trimmed = input.trim();
-    if (!trimmed || isLoading || introLoading) return;
+    if (!trimmed || isLoading || introLoading || closingSummary) return;
 
     const userMessage: Message = { role: "user", content: trimmed };
     const isFirstMessage = !hasUserMessage;
@@ -156,7 +170,12 @@ export default function Chat({ copy, locale, onBack }: ChatProps) {
         body: JSON.stringify({ messages: historyForApi }),
       });
 
-      let data: { message?: string; error?: string };
+      let data: {
+        message?: string;
+        error?: string;
+        isClosing?: boolean;
+        summary?: string;
+      };
       try {
         data = await res.json();
       } catch {
@@ -179,6 +198,12 @@ export default function Chat({ copy, locale, onBack }: ChatProps) {
             content: assistantContent,
           },
         ]);
+
+        if (data.isClosing) {
+          setClosingSummary(
+            data.summary?.trim() || assistantContent.trim()
+          );
+        }
       }
     } catch (err) {
       const detail =
@@ -223,6 +248,15 @@ export default function Chat({ copy, locale, onBack }: ChatProps) {
         <h1 className="text-lg font-medium tracking-tight text-neutral-900">
           Navu
         </h1>
+        {hasUserMessage && (
+          <button
+            type="button"
+            onClick={startNewConversation}
+            className="ml-auto rounded-full border border-neutral-200 bg-white px-3.5 py-1.5 text-[13px] font-medium text-neutral-700 transition-colors hover:border-neutral-300 hover:bg-neutral-50"
+          >
+            {copy.newConversationButton}
+          </button>
+        )}
       </header>
 
       <div className="relative flex min-h-0 flex-1 flex-col">
@@ -266,6 +300,18 @@ export default function Chat({ copy, locale, onBack }: ChatProps) {
                 <MessageBubble key={index} message={message} />
               ))}
               {isLoading && <TypingIndicator />}
+              {closingSummary && (
+                <ClosingSummaryCard
+                  title={copy.summaryCardTitle}
+                  summary={closingSummary}
+                  shareInsightLabel={copy.shareInsightButton}
+                  shareCopiedLabel={copy.shareCopiedLabel}
+                  shareClipboardHeader={copy.shareClipboardHeader}
+                  shareClipboardFooter={copy.shareClipboardFooter}
+                  newConversationLabel={copy.newConversationButton}
+                  onNewConversation={startNewConversation}
+                />
+              )}
               <div ref={bottomRef} aria-hidden />
             </div>
           </div>
@@ -284,12 +330,14 @@ export default function Chat({ copy, locale, onBack }: ChatProps) {
             onKeyDown={handleKeyDown}
             placeholder={copy.inputPlaceholder}
             rows={2}
-            disabled={isLoading || introLoading}
+            disabled={isLoading || introLoading || !!closingSummary}
             className="max-h-80 min-h-[52px] flex-1 resize-none overflow-y-auto rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-[15px] leading-relaxed text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-300 focus:bg-white focus:outline-none disabled:opacity-50"
           />
           <button
             type="submit"
-            disabled={!input.trim() || isLoading || introLoading}
+            disabled={
+              !input.trim() || isLoading || introLoading || !!closingSummary
+            }
             className="shrink-0 rounded-2xl bg-neutral-900 px-5 py-3.5 text-[15px] font-medium text-white shadow-sm transition-colors hover:bg-neutral-800 disabled:cursor-not-allowed disabled:bg-neutral-300 disabled:text-neutral-500"
           >
             {copy.sendButton}
@@ -337,6 +385,80 @@ function formatAssistantMessage(content: string) {
         return <span key={index}>{part}</span>;
       })}
     </span>
+  );
+}
+
+function ClosingSummaryCard({
+  title,
+  summary,
+  shareInsightLabel,
+  shareCopiedLabel,
+  shareClipboardHeader,
+  shareClipboardFooter,
+  newConversationLabel,
+  onNewConversation,
+}: {
+  title: string;
+  summary: string;
+  shareInsightLabel: string;
+  shareCopiedLabel: string;
+  shareClipboardHeader: string;
+  shareClipboardFooter: string;
+  newConversationLabel: string;
+  onNewConversation: () => void;
+}) {
+  const [copied, setCopied] = useState(false);
+
+  async function handleShare() {
+    const text = formatInsightForClipboard(
+      shareClipboardHeader,
+      summary,
+      shareClipboardFooter
+    );
+
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2200);
+    } catch {
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textarea);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2200);
+    }
+  }
+
+  return (
+    <div className="mt-2 w-full rounded-2xl border border-neutral-100 bg-white px-6 py-6 shadow-[0_2px_12px_rgba(44,40,37,0.06)]">
+      <h2 className="text-[17px] font-medium tracking-tight text-neutral-900">
+        {title}
+      </h2>
+      <p className="mt-4 whitespace-pre-line text-[15px] leading-[1.75] text-neutral-600">
+        {formatAssistantMessage(summary)}
+      </p>
+      <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+        <button
+          type="button"
+          onClick={handleShare}
+          className="rounded-2xl border border-neutral-200 bg-white px-5 py-3 text-[14px] font-medium text-neutral-800 transition-colors hover:border-neutral-300 hover:bg-neutral-50"
+        >
+          {copied ? shareCopiedLabel : shareInsightLabel}
+        </button>
+        <button
+          type="button"
+          onClick={onNewConversation}
+          className="rounded-2xl bg-neutral-900 px-5 py-3 text-[14px] font-medium text-white transition-colors hover:bg-neutral-800 sm:ml-auto"
+        >
+          {newConversationLabel}
+        </button>
+      </div>
+    </div>
   );
 }
 
