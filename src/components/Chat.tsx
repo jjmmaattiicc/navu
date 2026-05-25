@@ -116,7 +116,7 @@ export default function Chat({ copy, locale, onBack }: ChatProps) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const trimmed = input.trim();
-    if (!trimmed || isLoading || introLoading || closingSummary) return;
+    if (!trimmed || isLoading || introLoading) return;
 
     const userMessage: Message = { role: "user", content: trimmed };
     const isFirstMessage = !hasUserMessage;
@@ -302,14 +302,12 @@ export default function Chat({ copy, locale, onBack }: ChatProps) {
             onKeyDown={handleKeyDown}
             placeholder={copy.inputPlaceholder}
             rows={2}
-            disabled={isLoading || introLoading || !!closingSummary}
+            disabled={isLoading || introLoading}
             className="max-h-80 min-h-[52px] flex-1 resize-none overflow-y-auto rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-[15px] leading-relaxed text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-300 focus:bg-white focus:outline-none disabled:opacity-50"
           />
           <button
             type="submit"
-            disabled={
-              !input.trim() || isLoading || introLoading || !!closingSummary
-            }
+            disabled={!input.trim() || isLoading || introLoading}
             className="shrink-0 rounded-2xl bg-neutral-900 px-5 py-3.5 text-[15px] font-medium text-white shadow-sm transition-colors hover:bg-neutral-800 disabled:cursor-not-allowed disabled:bg-neutral-300 disabled:text-neutral-500"
           >
             {copy.sendButton}
