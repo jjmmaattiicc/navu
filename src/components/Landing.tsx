@@ -15,7 +15,13 @@ export default function Landing({ copy, onStart }: LandingProps) {
           Navu
         </p>
 
-        <h1 className="mt-20 text-[2rem] font-medium leading-[1.2] tracking-tight text-[#2C1810] sm:text-[2.4rem]">
+        <h1
+          className="mt-20 text-[2rem] font-medium leading-[1.2] tracking-tight text-[#2C1810] sm:text-[2.4rem]"
+          style={{
+            fontVariantLigatures: "none",
+            fontFeatureSettings: '"liga" 0, "clig" 0, "dlig" 0, "calt" 0',
+          }}
+        >
           {copy.tagline}
         </h1>
 
