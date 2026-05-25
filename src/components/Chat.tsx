@@ -4,6 +4,13 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { AppCopy, Locale } from "@/lib/i18n";
 import { finalizeAssistantReply, type Message } from "@/lib/navu";
 import { formatInsightForClipboard } from "@/lib/share-insight";
+import { getSummaryLabels } from "@/lib/ui-copy";
+
+type ClosingState = {
+  insights: string;
+  action: string;
+  language: string;
+};
 
 type ChatProps = {
   copy: AppCopy;
@@ -19,7 +26,9 @@ export default function Chat({ copy, locale, onBack }: ChatProps) {
   const [welcomeFading, setWelcomeFading] = useState(false);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [closingSummary, setClosingSummary] = useState<string | null>(null);
+  const [closingSummary, setClosingSummary] = useState<ClosingState | null>(
+    null
+  );
   const scrollRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -33,40 +42,14 @@ export default function Chat({ copy, locale, onBack }: ChatProps) {
     setWelcomeText("");
 
     try {
-      const res = await fetch("/api/opening", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          locale,
-          language:
-            typeof navigator !== "undefined" ? navigator.language : locale,
-        }),
-      });
+      const res = await fetch("/api/opening", { method: "POST" });
 
       if (!res.ok) {
-        const data: { error?: string } = await res.json();
+        const data: { error?: string } = await res.json().catch(() => ({}));
         throw new Error(data.error ?? `Request failed (${res.status})`);
       }
 
-      const reader = res.body?.getReader();
-      if (!reader) {
-        throw new Error("No opening message in response");
-      }
-
-      const decoder = new TextDecoder();
-      let accumulated = "";
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        accumulated += decoder.decode(value, { stream: true });
-        if (fetchId !== openingFetchId.current) return;
-        setWelcomeText(accumulated);
-        setIntroLoading(false);
-      }
-
-      accumulated += decoder.decode();
-      const message = accumulated.trim();
+      const message = (await res.text()).trim();
 
       if (!message) {
         throw new Error("No opening message in response");
@@ -74,7 +57,6 @@ export default function Chat({ copy, locale, onBack }: ChatProps) {
 
       if (fetchId === openingFetchId.current) {
         setWelcomeText(message);
-        setIntroLoading(false);
       }
     } catch (err) {
       if (fetchId === openingFetchId.current) {
@@ -87,7 +69,7 @@ export default function Chat({ copy, locale, onBack }: ChatProps) {
         setIntroLoading(false);
       }
     }
-  }, [locale]);
+  }, []);
 
   useEffect(() => {
     loadOpeningMessage();
@@ -121,17 +103,7 @@ export default function Chat({ copy, locale, onBack }: ChatProps) {
 
   useEffect(() => {
     if (!hasUserMessage) return;
-
-    const container = scrollRef.current;
-    if (!container) return;
-
-    const isNearBottom =
-      container.scrollHeight - container.scrollTop - container.clientHeight <
-      100;
-
-    if (isNearBottom) {
-      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-    }
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isLoading, hasUserMessage, closingSummary]);
 
   useEffect(() => {
@@ -175,6 +147,8 @@ export default function Chat({ copy, locale, onBack }: ChatProps) {
         error?: string;
         isClosing?: boolean;
         summary?: string;
+        action?: string;
+        language?: string;
       };
       try {
         data = await res.json();
@@ -200,9 +174,11 @@ export default function Chat({ copy, locale, onBack }: ChatProps) {
         ]);
 
         if (data.isClosing) {
-          setClosingSummary(
-            data.summary?.trim() || assistantContent.trim()
-          );
+          setClosingSummary({
+            insights: data.summary?.trim() || assistantContent.trim(),
+            action: data.action?.trim() ?? "",
+            language: data.language?.trim() || locale,
+          });
         }
       }
     } catch (err) {
@@ -302,13 +278,9 @@ export default function Chat({ copy, locale, onBack }: ChatProps) {
               {isLoading && <TypingIndicator />}
               {closingSummary && (
                 <ClosingSummaryCard
-                  title={copy.summaryCardTitle}
-                  summary={closingSummary}
-                  shareInsightLabel={copy.shareInsightButton}
-                  shareCopiedLabel={copy.shareCopiedLabel}
-                  shareClipboardHeader={copy.shareClipboardHeader}
-                  shareClipboardFooter={copy.shareClipboardFooter}
-                  newConversationLabel={copy.newConversationButton}
+                  insights={closingSummary.insights}
+                  action={closingSummary.action}
+                  language={closingSummary.language}
                   onNewConversation={startNewConversation}
                 />
               )}
@@ -389,31 +361,28 @@ function formatAssistantMessage(content: string) {
 }
 
 function ClosingSummaryCard({
-  title,
-  summary,
-  shareInsightLabel,
-  shareCopiedLabel,
-  shareClipboardHeader,
-  shareClipboardFooter,
-  newConversationLabel,
+  insights,
+  action,
+  language,
   onNewConversation,
 }: {
-  title: string;
-  summary: string;
-  shareInsightLabel: string;
-  shareCopiedLabel: string;
-  shareClipboardHeader: string;
-  shareClipboardFooter: string;
-  newConversationLabel: string;
+  insights: string;
+  action: string;
+  language: string;
   onNewConversation: () => void;
 }) {
+  const labels = getSummaryLabels(language);
   const [copied, setCopied] = useState(false);
+
+  const clipboardBody = action
+    ? `${insights}\n\n${labels.actionLabel}: ${action}`
+    : insights;
 
   async function handleShare() {
     const text = formatInsightForClipboard(
-      shareClipboardHeader,
-      summary,
-      shareClipboardFooter
+      labels.shareClipboardHeader,
+      clipboardBody,
+      labels.shareClipboardFooter
     );
 
     try {
@@ -437,25 +406,35 @@ function ClosingSummaryCard({
   return (
     <div className="mt-2 w-full rounded-2xl border border-neutral-100 bg-white px-6 py-6 shadow-[0_2px_12px_rgba(44,40,37,0.06)]">
       <h2 className="text-[17px] font-medium tracking-tight text-neutral-900">
-        {title}
+        {labels.title}
       </h2>
       <p className="mt-4 whitespace-pre-line text-[15px] leading-[1.75] text-neutral-600">
-        {formatAssistantMessage(summary)}
+        {formatAssistantMessage(insights)}
       </p>
+      {action && (
+        <div className="mt-5 rounded-xl bg-neutral-50 px-4 py-4">
+          <p className="text-[13px] font-medium uppercase tracking-wide text-neutral-500">
+            {labels.actionLabel}
+          </p>
+          <p className="mt-2 whitespace-pre-line text-[15px] leading-[1.6] text-neutral-800">
+            {formatAssistantMessage(action)}
+          </p>
+        </div>
+      )}
       <div className="mt-6 flex flex-col gap-3 sm:flex-row">
         <button
           type="button"
           onClick={handleShare}
           className="rounded-2xl border border-neutral-200 bg-white px-5 py-3 text-[14px] font-medium text-neutral-800 transition-colors hover:border-neutral-300 hover:bg-neutral-50"
         >
-          {copied ? shareCopiedLabel : shareInsightLabel}
+          {copied ? labels.shareCopiedLabel : labels.shareInsightLabel}
         </button>
         <button
           type="button"
           onClick={onNewConversation}
           className="rounded-2xl bg-neutral-900 px-5 py-3 text-[14px] font-medium text-white transition-colors hover:bg-neutral-800 sm:ml-auto"
         >
-          {newConversationLabel}
+          {labels.newConversationLabel}
         </button>
       </div>
     </div>

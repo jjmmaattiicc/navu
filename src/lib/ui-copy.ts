@@ -37,7 +37,7 @@ const strings: Partial<Record<Locale, Partial<UiStrings>>> = {
   en,
   hr: {
     trustLine: TRUST_LINES.hr,
-    durationLine: "Obično 10-15 minuta. Otići ćete s jasnoćom.",
+    durationLine: "Obično 10-15 minuta. Otići ćeš s jasnoćom.",
     backButton: "Natrag",
     newConversationButton: "Novi razgovor",
     summaryCardTitle: "Što si danas otkrio",
@@ -45,7 +45,7 @@ const strings: Partial<Record<Locale, Partial<UiStrings>>> = {
     shareCopiedLabel: "Kopirano",
     shareClipboardHeader: "Što sam danas otkrio/la s Navu",
     shareClipboardFooter: "— Navu",
-    inputPlaceholder: "Pišite slobodno...",
+    inputPlaceholder: "Piši slobodno...",
   },
   de: {
     trustLine:
@@ -202,4 +202,82 @@ export function getUiStrings(locale: Locale): UiStrings {
     privacyLine: PRIVACY_LINES[locale] ?? PRIVACY_LINES.en,
     introMessage: CHAT_INTROS[locale] ?? CHAT_INTROS.en,
   };
+}
+
+export type SummaryLanguage = "hr" | "en" | "de" | "es" | "fr";
+
+export type SummaryLabels = {
+  title: string;
+  actionLabel: string;
+  shareInsightLabel: string;
+  shareCopiedLabel: string;
+  shareClipboardHeader: string;
+  shareClipboardFooter: string;
+  newConversationLabel: string;
+};
+
+const SUMMARY_LABELS: Record<SummaryLanguage, SummaryLabels> = {
+  en: {
+    title: "What you discovered today",
+    actionLabel: "One step you can take",
+    shareInsightLabel: "Share insight",
+    shareCopiedLabel: "Copied",
+    shareClipboardHeader: "What I discovered with Navu today",
+    shareClipboardFooter: "— Navu",
+    newConversationLabel: "New conversation",
+  },
+  hr: {
+    title: "Što si danas otkrio",
+    actionLabel: "Jedan korak koji možeš napraviti",
+    shareInsightLabel: "Podijeli uvid",
+    shareCopiedLabel: "Kopirano",
+    shareClipboardHeader: "Što sam danas otkrio s Navu",
+    shareClipboardFooter: "— Navu",
+    newConversationLabel: "Novi razgovor",
+  },
+  de: {
+    title: "Was du heute entdeckt hast",
+    actionLabel: "Ein Schritt, den du gehen kannst",
+    shareInsightLabel: "Einsicht teilen",
+    shareCopiedLabel: "Kopiert",
+    shareClipboardHeader: "Was ich heute mit Navu entdeckt habe",
+    shareClipboardFooter: "— Navu",
+    newConversationLabel: "Neues Gespräch",
+  },
+  es: {
+    title: "Lo que descubriste hoy",
+    actionLabel: "Un paso que puedes dar",
+    shareInsightLabel: "Compartir descubrimiento",
+    shareCopiedLabel: "Copiado",
+    shareClipboardHeader: "Lo que descubrí hoy con Navu",
+    shareClipboardFooter: "— Navu",
+    newConversationLabel: "Nueva conversación",
+  },
+  fr: {
+    title: "Ce que tu as découvert aujourd'hui",
+    actionLabel: "Un pas que tu peux faire",
+    shareInsightLabel: "Partager l'insight",
+    shareCopiedLabel: "Copié",
+    shareClipboardHeader: "Ce que j'ai découvert aujourd'hui avec Navu",
+    shareClipboardFooter: "— Navu",
+    newConversationLabel: "Nouvelle conversation",
+  },
+};
+
+const SUMMARY_LANGUAGE_ALIASES: Record<string, SummaryLanguage> = {
+  hr: "hr",
+  sr: "hr",
+  bs: "hr",
+  en: "en",
+  de: "de",
+  es: "es",
+  fr: "fr",
+};
+
+/** Pick summary card labels for the language the AI used in its closing. */
+export function getSummaryLabels(language: string | undefined): SummaryLabels {
+  if (!language) return SUMMARY_LABELS.en;
+  const base = language.trim().toLowerCase().split("-")[0];
+  const resolved = SUMMARY_LANGUAGE_ALIASES[base];
+  return SUMMARY_LABELS[resolved ?? "en"];
 }

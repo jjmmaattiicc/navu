@@ -17,7 +17,7 @@ export const copy = {
     startButton: "Započni razgovor",
     greeting:
       "Hej, drago mi je što si ovdje. Što ti je u mislima u zadnje vrijeme?",
-    inputPlaceholder: "Upišite odgovor...",
+    inputPlaceholder: "Upiši odgovor...",
     sendButton: "Pošalji",
   },
   de: {
@@ -196,7 +196,7 @@ export const copy = {
     tagline:
       "Ei tekoäly, joka antaa sinulle vastaukset. Vaan tekoäly, joka auttaa sinua löytämään omasi.",
     description:
-      "Vastaa rehellisesti. Yksi kysymys kerrallaan. Vieämme sinut perille.",
+      "Vastaa rehellisesti. Yksi kysymys kerrallaan. Vieme sinut perille.",
     startButton: "Aloita keskustelu",
     greeting: "Hei, kiva että olet täällä. Mitä sinulla on mielessä viime aikoina?",
     inputPlaceholder: "Kirjoita vastauksesi...",

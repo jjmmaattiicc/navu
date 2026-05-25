@@ -4,7 +4,7 @@ const en = "Nobody else sees what you write.";
 
 export const PRIVACY_LINES: Record<Locale, string> = {
   en,
-  hr: "Nitko drugi ne vidi što pišete.",
+  hr: "Nitko drugi ne vidi što pišeš.",
   de: "Niemand sonst sieht, was du schreibst.",
   es: "Nadie más ve lo que escribes.",
   fr: "Personne d'autre ne voit ce que vous écrivez.",

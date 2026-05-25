@@ -4,6 +4,7 @@ import {
   finalizeAssistantReply,
   isClosingMessage,
   NAVU_SYSTEM_PROMPT,
+  parseClosingPayload,
   prepareMessagesForApi,
   type Message,
 } from "@/lib/navu";
@@ -92,6 +93,19 @@ export async function POST(request: Request) {
     const rawReply = textBlock?.type === "text" ? textBlock.text.trim() : "";
 
     console.log("[chat] raw AI reply:", rawReply);
+
+    const closingPayload = parseClosingPayload(rawReply);
+    if (closingPayload) {
+      console.log("[chat] closing payload:", closingPayload);
+      const summaryText = `${closingPayload.insights}`;
+      return Response.json({
+        message: closingPayload.closingMessage,
+        isClosing: true,
+        summary: summaryText,
+        action: closingPayload.action,
+        language: closingPayload.language,
+      });
+    }
 
     const reply = finalizeAssistantReply(rawReply, preparedMessages);
 
