@@ -16,6 +16,8 @@ export type UiStrings = {
   shareClipboardHeader: string;
   shareClipboardFooter: string;
   inputPlaceholder: string;
+  howItWorks: readonly [string, string, string];
+  footerLine: string;
 };
 
 const en: UiStrings = {
@@ -31,6 +33,12 @@ const en: UiStrings = {
   shareClipboardHeader: "What I discovered with Navu today",
   shareClipboardFooter: "— Navu",
   inputPlaceholder: "Write freely...",
+  howItWorks: [
+    "You write freely.",
+    "Navu asks one question.",
+    "You arrive at your own answer.",
+  ],
+  footerLine: "Made with care",
 };
 
 const strings: Partial<Record<Locale, Partial<UiStrings>>> = {
@@ -43,9 +51,15 @@ const strings: Partial<Record<Locale, Partial<UiStrings>>> = {
     summaryCardTitle: "Što si danas otkrio",
     shareInsightButton: "Podijeli uvid",
     shareCopiedLabel: "Kopirano",
-    shareClipboardHeader: "Što sam danas otkrio/la s Navu",
+    shareClipboardHeader: "Što sam danas otkrio s Navu",
     shareClipboardFooter: "— Navu",
     inputPlaceholder: "Piši slobodno...",
+    howItWorks: [
+      "Pišeš slobodno.",
+      "Navu pita jedno pitanje.",
+      "Sam dolaziš do odgovora.",
+    ],
+    footerLine: "Stvoreno s pažnjom",
   },
   de: {
     trustLine:
@@ -59,6 +73,12 @@ const strings: Partial<Record<Locale, Partial<UiStrings>>> = {
     shareClipboardHeader: "Was ich heute mit Navu entdeckt habe",
     shareClipboardFooter: "— Navu",
     inputPlaceholder: "Schreib frei...",
+    howItWorks: [
+      "Du schreibst frei.",
+      "Navu stellt eine Frage.",
+      "Du kommst zu deiner Antwort.",
+    ],
+    footerLine: "Mit Sorgfalt gemacht",
   },
   es: {
     trustLine:
@@ -72,6 +92,12 @@ const strings: Partial<Record<Locale, Partial<UiStrings>>> = {
     shareClipboardHeader: "Lo que descubrí hoy con Navu",
     shareClipboardFooter: "— Navu",
     inputPlaceholder: "Escribe con libertad...",
+    howItWorks: [
+      "Escribes con libertad.",
+      "Navu hace una pregunta.",
+      "Llegas a tu propia respuesta.",
+    ],
+    footerLine: "Hecho con cuidado",
   },
   fr: {
     trustLine:
@@ -85,6 +111,12 @@ const strings: Partial<Record<Locale, Partial<UiStrings>>> = {
     shareClipboardHeader: "Ce que j'ai découvert aujourd'hui avec Navu",
     shareClipboardFooter: "— Navu",
     inputPlaceholder: "Écrivez librement...",
+    howItWorks: [
+      "Tu écris librement.",
+      "Navu pose une question.",
+      "Tu trouves ta propre réponse.",
+    ],
+    footerLine: "Fait avec soin",
   },
   it: {
     trustLine:
