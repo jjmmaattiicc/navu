@@ -10,7 +10,7 @@ export default function Page() {
   const { copy, locale, ready } = useBrowserLocale();
 
   if (!ready) {
-    return <div className="min-h-dvh bg-white" />;
+    return <div className="min-h-dvh bg-[#FAF7F2]" />;
   }
 
   if (!started) {

@@ -212,23 +212,23 @@ export default function Chat({ copy, locale, onBack }: ChatProps) {
   }
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-[#FAF8F5]">
-      <header className="flex h-[60px] shrink-0 items-center gap-3 border-b border-neutral-100 px-4 sm:px-6">
+    <div className="flex h-screen flex-col overflow-hidden bg-[#FAF7F2]">
+      <header className="flex h-[60px] shrink-0 items-center gap-3 border-b border-[#D4C4B0]/60 px-4 sm:px-6">
         <button
           type="button"
           onClick={onBack}
-          className="text-[14px] text-neutral-400 transition-colors hover:text-neutral-600"
+          className="text-[14px] text-[#7A5040] transition-colors hover:text-[#2C1810]"
         >
           ← {copy.backButton}
         </button>
-        <h1 className="text-lg font-medium tracking-tight text-neutral-900">
+        <h1 className="text-lg font-medium tracking-tight text-[#2C1810]">
           Navu
         </h1>
         {hasUserMessage && (
           <button
             type="button"
             onClick={startNewConversation}
-            className="ml-auto rounded-full border border-neutral-200 bg-white px-3.5 py-1.5 text-[13px] font-medium text-neutral-700 transition-colors hover:border-neutral-300 hover:bg-neutral-50"
+            className="ml-auto rounded-full border border-[#D4C4B0] bg-[#F0E8DC] px-3.5 py-1.5 text-[13px] font-medium text-[#2C1810] transition-colors hover:border-[#7A5040] hover:bg-[#E8DBC9]"
           >
             {copy.newConversationButton}
           </button>
@@ -254,7 +254,7 @@ export default function Chat({ copy, locale, onBack }: ChatProps) {
                 </div>
               {welcomeText && (
                   <p
-                    className={`col-start-1 row-start-1 whitespace-pre-line text-center text-[1.2rem] leading-[2.4] text-[#3D3530] transition-opacity duration-300 md:text-[1.8rem] ${
+                    className={`col-start-1 row-start-1 whitespace-pre-line text-center text-[1.2rem] leading-[2.4] text-[#2C1810] transition-opacity duration-300 md:text-[1.8rem] ${
                       introLoading ? "opacity-0" : "opacity-100"
                     }`}
                   >
@@ -290,7 +290,7 @@ export default function Chat({ copy, locale, onBack }: ChatProps) {
         )}
       </div>
 
-      <footer className="shrink-0 border-t border-neutral-100 bg-white px-4 py-4 sm:px-6">
+      <footer className="shrink-0 border-t border-[#D4C4B0]/60 bg-[#FAF7F2] px-4 py-4 sm:px-6">
         <form
           onSubmit={handleSubmit}
           className="mx-auto flex w-full max-w-[680px] items-end gap-3"
@@ -303,12 +303,12 @@ export default function Chat({ copy, locale, onBack }: ChatProps) {
             placeholder={copy.inputPlaceholder}
             rows={2}
             disabled={isLoading || introLoading}
-            className="max-h-80 min-h-[52px] flex-1 resize-none overflow-y-auto rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-[15px] leading-relaxed text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-300 focus:bg-white focus:outline-none disabled:opacity-50"
+            className="max-h-80 min-h-[52px] flex-1 resize-none overflow-y-auto rounded-2xl border border-[#D4C4B0] bg-[#F0E8DC] px-4 py-3 text-[15px] leading-relaxed text-[#2C1810] placeholder:text-[#A89580] focus:border-[#7A5040] focus:outline-none disabled:opacity-50"
           />
           <button
             type="submit"
             disabled={!input.trim() || isLoading || introLoading}
-            className="shrink-0 rounded-2xl bg-neutral-900 px-5 py-3.5 text-[15px] font-medium text-white shadow-sm transition-colors hover:bg-neutral-800 disabled:cursor-not-allowed disabled:bg-neutral-300 disabled:text-neutral-500"
+            className="shrink-0 rounded-2xl bg-[#5C3D2E] px-5 py-3.5 text-[15px] font-medium text-[#FAF7F2] shadow-sm transition-colors hover:bg-[#7A5040] disabled:cursor-not-allowed disabled:bg-[#D4C4B0] disabled:text-[#A89580]"
           >
             {copy.sendButton}
           </button>
@@ -324,7 +324,7 @@ function MessageBubble({ message }: { message: Message }) {
   if (isUser) {
     return (
       <div
-        className="w-fit max-w-[65%] self-end bg-[#2C2825] px-4 py-2.5 text-left text-[15px] leading-[1.6] text-[#F5F2EC]"
+        className="w-fit max-w-[65%] self-end bg-[#5C3D2E] px-4 py-2.5 text-left text-[15px] leading-[1.6] text-[#FAF7F2]"
         style={{ borderRadius: "18px 18px 4px 18px" }}
       >
         {message.content}
@@ -333,7 +333,7 @@ function MessageBubble({ message }: { message: Message }) {
   }
 
   return (
-    <div className="w-fit max-w-[65%] self-start bg-transparent px-1 py-0 text-left text-[15px] leading-[1.7] text-[#3D3530]">
+    <div className="w-fit max-w-[65%] self-start bg-transparent px-1 py-0 text-left text-[15px] leading-[1.7] text-[#2C1810]">
       {formatAssistantMessage(message.content)}
     </div>
   );
@@ -347,7 +347,7 @@ function formatAssistantMessage(content: string) {
       {parts.map((part, index) => {
         if (part.startsWith("**") && part.endsWith("**")) {
           return (
-            <strong key={index} className="font-semibold text-[#3D3530]">
+            <strong key={index} className="font-semibold text-[#2C1810]">
               {part.slice(2, -2)}
             </strong>
           );
@@ -402,19 +402,19 @@ function ClosingSummaryCard({
   }
 
   return (
-    <div className="mt-2 w-full rounded-2xl border border-neutral-100 bg-white px-6 py-6 shadow-[0_2px_12px_rgba(44,40,37,0.06)]">
-      <h2 className="text-[17px] font-medium tracking-tight text-neutral-900">
+    <div className="mt-2 w-full rounded-2xl border border-[#D4C4B0]/60 bg-[#F0E8DC] px-6 py-6 shadow-[0_2px_12px_rgba(44,24,16,0.06)]">
+      <h2 className="text-[17px] font-medium tracking-tight text-[#2C1810]">
         {labels.title}
       </h2>
-      <p className="mt-4 whitespace-pre-line text-[15px] leading-[1.75] text-neutral-600">
+      <p className="mt-4 whitespace-pre-line text-[15px] leading-[1.75] text-[#5C3D2E]">
         {formatAssistantMessage(insights)}
       </p>
       {action && (
-        <div className="mt-5 rounded-xl bg-neutral-50 px-4 py-4">
-          <p className="text-[13px] font-medium uppercase tracking-wide text-neutral-500">
+        <div className="mt-5 rounded-xl bg-[#FAF7F2] px-4 py-4">
+          <p className="text-[13px] font-medium uppercase tracking-wide text-[#7A5040]">
             {labels.actionLabel}
           </p>
-          <p className="mt-2 whitespace-pre-line text-[15px] leading-[1.6] text-neutral-800">
+          <p className="mt-2 whitespace-pre-line text-[15px] leading-[1.6] text-[#2C1810]">
             {formatAssistantMessage(action)}
           </p>
         </div>
@@ -423,14 +423,14 @@ function ClosingSummaryCard({
         <button
           type="button"
           onClick={handleShare}
-          className="rounded-2xl border border-neutral-200 bg-white px-5 py-3 text-[14px] font-medium text-neutral-800 transition-colors hover:border-neutral-300 hover:bg-neutral-50"
+          className="rounded-2xl border border-[#D4C4B0] bg-[#FAF7F2] px-5 py-3 text-[14px] font-medium text-[#2C1810] transition-colors hover:border-[#7A5040] hover:bg-[#F0E8DC]"
         >
           {copied ? labels.shareCopiedLabel : labels.shareInsightLabel}
         </button>
         <button
           type="button"
           onClick={onNewConversation}
-          className="rounded-2xl bg-neutral-900 px-5 py-3 text-[14px] font-medium text-white transition-colors hover:bg-neutral-800 sm:ml-auto"
+          className="rounded-2xl bg-[#5C3D2E] px-5 py-3 text-[14px] font-medium text-[#FAF7F2] transition-colors hover:bg-[#7A5040] sm:ml-auto"
         >
           {labels.newConversationLabel}
         </button>
@@ -442,9 +442,9 @@ function ClosingSummaryCard({
 function WelcomeLoadingDots() {
   return (
     <>
-      <span className="welcome-pulse-dot h-2 w-2 rounded-full bg-[#3D3530]" />
-      <span className="welcome-pulse-dot welcome-pulse-dot-delay-1 h-2 w-2 rounded-full bg-[#3D3530]" />
-      <span className="welcome-pulse-dot welcome-pulse-dot-delay-2 h-2 w-2 rounded-full bg-[#3D3530]" />
+      <span className="welcome-pulse-dot h-2 w-2 rounded-full bg-[#5C3D2E]" />
+      <span className="welcome-pulse-dot welcome-pulse-dot-delay-1 h-2 w-2 rounded-full bg-[#5C3D2E]" />
+      <span className="welcome-pulse-dot welcome-pulse-dot-delay-2 h-2 w-2 rounded-full bg-[#5C3D2E]" />
     </>
   );
 }
@@ -452,9 +452,9 @@ function WelcomeLoadingDots() {
 function TypingIndicator() {
   return (
     <div className="flex w-fit max-w-[65%] items-center gap-1.5 self-start px-1 py-0">
-      <span className="typing-dot h-2 w-2 rounded-full bg-[#3D3530]/35" />
-      <span className="typing-dot typing-dot-delay-1 h-2 w-2 rounded-full bg-[#3D3530]/35" />
-      <span className="typing-dot typing-dot-delay-2 h-2 w-2 rounded-full bg-[#3D3530]/35" />
+      <span className="typing-dot h-2 w-2 rounded-full bg-[#5C3D2E]/35" />
+      <span className="typing-dot typing-dot-delay-1 h-2 w-2 rounded-full bg-[#5C3D2E]/35" />
+      <span className="typing-dot typing-dot-delay-2 h-2 w-2 rounded-full bg-[#5C3D2E]/35" />
     </div>
   );
 }
